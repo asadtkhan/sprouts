@@ -209,9 +209,18 @@ export function TourGuide() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, i, pathname, measure]);
 
+  // Measure the card's natural height (ignoring the clamp) so placement decisions
+  // don't feed back on themselves and clip the copy.
   useLayoutEffect(() => {
-    if (cardRef.current) setCardH(cardRef.current.offsetHeight);
+    const el = cardRef.current;
+    if (!el) return;
+    const prev = el.style.maxHeight;
+    el.style.maxHeight = "none";
+    const h = el.offsetHeight;
+    el.style.maxHeight = prev;
+    setCardH((v) => (Math.abs(v - h) > 1 ? h : v));
   }, [i, open, rect]);
+
 
   if (!open || !appState.onboarded) return null;
 
@@ -224,9 +233,16 @@ export function TourGuide() {
   const Icon = step.icon;
   const last = i === STEPS.length - 1;
   const pct = ((i + 1) / STEPS.length) * 100;
+  const vw = typeof window === "undefined" ? 390 : window.innerWidth;
   const vh = typeof window === "undefined" ? 800 : window.innerHeight;
+  const compact = vw < 640;
 
-  const pad = 8;
+  // The fixed bottom nav must stay clear of the coach card.
+  const navSpace = 88;
+  const edge = 10;
+  const bottomLimit = vh - navSpace;
+
+  const pad = compact ? 6 : 8;
   const spot = rect
     ? {
         top: rect.top - pad,
@@ -236,17 +252,32 @@ export function TourGuide() {
       }
     : null;
 
-  // Place the card below the target when there's room, otherwise above.
-  const gap = 44; // room for the arrow
-  const below = spot ? spot.top + spot.height + gap + cardH < vh - 8 : false;
-  const cardTop = spot
-    ? below
-      ? spot.top + spot.height + gap
-      : Math.max(8, spot.top - gap - cardH)
-    : Math.max(8, vh - cardH - 88);
+  // Pick the side with the most usable room, then clamp everything on-screen.
+  const gap = compact ? 34 : 44; // room for the arrow
+  const roomBelow = spot ? bottomLimit - (spot.top + spot.height + gap) : 0;
+  const roomAbove = spot ? spot.top - gap - edge : 0;
+  const below = spot ? (roomBelow >= cardH ? true : roomBelow > roomAbove) : false;
+  // Target taller than the screen (common on phones): dock the card instead.
+  const docked = !!spot && Math.max(roomBelow, roomAbove) < cardH;
+  // The card keeps its natural height; only the viewport itself clamps it.
+  const maxCardH = vh - navSpace - edge;
 
-  const arrowTop = spot ? (below ? spot.top + spot.height + 6 : spot.top - 38) : 0;
-  const arrowLeft = spot ? Math.min(Math.max(spot.left + spot.width / 2 - 18, 16), (typeof window === "undefined" ? 380 : window.innerWidth) - 52) : 0;
+  const rawTop = docked
+    ? bottomLimit - Math.min(cardH, maxCardH)
+    : spot
+      ? below
+        ? spot.top + spot.height + gap
+        : spot.top - gap - Math.min(cardH, maxCardH)
+      : (vh - navSpace - Math.min(cardH, maxCardH)) / 2;
+  const cardTop = Math.max(edge, Math.min(rawTop, bottomLimit - Math.min(cardH, maxCardH)));
+
+  const arrowSize = compact ? 30 : 36;
+  const showArrow = !!spot && !docked;
+  const arrowTop = spot ? (below ? spot.top + spot.height + 4 : spot.top - arrowSize - 4) : 0;
+  const arrowLeft = spot
+    ? Math.min(Math.max(spot.left + spot.width / 2 - arrowSize / 2, edge), vw - arrowSize - edge)
+    : 0;
+
 
   return (
     <div className="fixed inset-0 z-[60] pointer-events-none">
@@ -267,13 +298,20 @@ export function TourGuide() {
       )}
 
       {/* pointing arrow */}
-      {spot && (
+      {showArrow && (
         <div
           className="absolute text-primary drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)] transition-all duration-300"
           style={{ top: arrowTop, left: arrowLeft, animation: "tour-bounce 1.1s ease-in-out infinite" }}
         >
-          <div className="w-9 h-9 rounded-full bg-white/95 border border-white flex items-center justify-center">
-            {below ? <ArrowUp className="w-5 h-5" /> : <ArrowDown className="w-5 h-5" />}
+          <div
+            className="rounded-full bg-card border border-border flex items-center justify-center"
+            style={{ width: arrowSize, height: arrowSize }}
+          >
+            {below ? (
+              <ArrowUp className={compact ? "w-4 h-4" : "w-5 h-5"} />
+            ) : (
+              <ArrowDown className={compact ? "w-4 h-4" : "w-5 h-5"} />
+            )}
           </div>
         </div>
       )}
@@ -285,11 +323,11 @@ export function TourGuide() {
       {/* coach card */}
       <div
         ref={cardRef}
-        className="pointer-events-auto absolute inset-x-3 mx-auto max-w-md rounded-3xl bg-white/95 backdrop-blur-xl border border-white/70 shadow-[0_12px_40px_-12px_rgba(60,50,120,0.45)] transition-all duration-300"
-        style={{ top: cardTop }}
+        className="pointer-events-auto absolute inset-x-2.5 sm:inset-x-4 mx-auto w-auto max-w-md rounded-3xl bg-card/95 backdrop-blur-xl border border-border shadow-[0_12px_40px_-12px_rgba(60,50,120,0.45)] transition-all duration-300 flex flex-col overflow-y-auto"
+        style={{ top: cardTop, maxHeight: maxCardH }}
       >
-        <div className="px-4 pt-4">
-          <div className="flex items-center justify-between text-[11px] uppercase tracking-widest text-muted-foreground mb-2">
+        <div className="px-4 pt-3.5 shrink-0">
+          <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
             <span>
               Step {i + 1} of {STEPS.length}
             </span>
@@ -297,7 +335,7 @@ export function TourGuide() {
               Skip <X className="w-3 h-3" />
             </button>
           </div>
-          <div className="relative h-1.5 rounded-full bg-black/5 overflow-hidden">
+          <div className="relative h-1.5 rounded-full bg-foreground/10 overflow-hidden">
             <div
               className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary/70 to-primary transition-all duration-500"
               style={{ width: `${pct}%` }}
@@ -306,31 +344,33 @@ export function TourGuide() {
         </div>
 
         <div className="px-4 pt-3 pb-3 flex gap-3">
-          <div className="w-10 h-10 shrink-0 rounded-2xl bg-primary/15 text-primary flex items-center justify-center">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-2xl bg-primary/15 text-primary flex items-center justify-center">
             <Icon className="w-5 h-5" />
           </div>
           <div className="min-w-0">
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{step.label}</div>
-            <div className="font-display text-lg leading-tight">{step.title}</div>
-            <p className="text-sm text-muted-foreground leading-relaxed mt-1">{step.body}</p>
+            <div className="font-display text-base sm:text-lg leading-tight">{step.title}</div>
+            <p className="text-[13px] sm:text-sm text-muted-foreground leading-relaxed mt-1">{step.body}</p>
           </div>
         </div>
 
-        <div className="px-4 pb-4 flex items-center gap-3">
+        <div className="px-4 pb-3.5 flex items-center gap-2.5 shrink-0">
           <button
             onClick={() => setI((v) => Math.max(0, v - 1))}
             disabled={i === 0}
             aria-label="Previous step"
-            className="w-11 h-11 rounded-full bg-white border border-black/5 flex items-center justify-center transition disabled:opacity-30 hover:bg-white"
+            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full bg-background border border-border flex items-center justify-center transition disabled:opacity-30"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <button
             onClick={() => (last ? finish() : setI(i + 1))}
-            className="flex-1 h-11 rounded-full bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 transition hover:opacity-90"
+            className="flex-1 min-w-0 h-10 sm:h-11 rounded-full bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 px-3 transition hover:opacity-90"
           >
-            {last ? "Finish tour" : `Next · ${STEPS[i + 1]?.label ?? ""}`}
-            {last ? <Check className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+            <span className="truncate">
+              {last ? "Finish tour" : `Next · ${STEPS[i + 1]?.label ?? ""}`}
+            </span>
+            {last ? <Check className="w-4 h-4 shrink-0" /> : <ArrowRight className="w-4 h-4 shrink-0" />}
           </button>
         </div>
       </div>
