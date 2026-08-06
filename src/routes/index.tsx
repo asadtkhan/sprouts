@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   useAppState,
-  useDaysSinceFirstOpen,
+  shouldPromptSignup,
   requestNotifPermission,
   forceEndDay,
   logIndividual,
@@ -44,12 +44,11 @@ function Index() {
 
 function Hub() {
   const s = useAppState();
-  const days = useDaysSinceFirstOpen();
   const [acctOpen, setAcctOpen] = useState(false);
 
   useEffect(() => {
-    if (days >= 7 && !s.hasAccount) setAcctOpen(true);
-  }, [days, s.hasAccount]);
+    if (shouldPromptSignup(s)) setAcctOpen(true);
+  }, [s]);
 
   const today = new Date();
   const { pct, done, due } = dayProgress(s.habits, today);
@@ -78,11 +77,6 @@ function Hub() {
           >
             <Bell className="w-4 h-4" />
           </Button>
-          {!s.hasAccount && (
-            <Button onClick={() => setAcctOpen(true)} variant="ghost" className="glass-soft rounded-full text-xs">
-              Save progress
-            </Button>
-          )}
         </div>
       </div>
 

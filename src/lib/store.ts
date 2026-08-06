@@ -77,6 +77,7 @@ export interface AppState {
   game: GameState | null;
   logs: DayLog[];
   firstOpenedAt: number | null;
+  firstActivityAt: number | null;
   hasAccount: boolean;
   accountEmail: string | null;
   onboarded: boolean;
@@ -101,6 +102,7 @@ const empty: AppState = {
   game: null,
   logs: [],
   firstOpenedAt: null,
+  firstActivityAt: null,
   hasAccount: false,
   accountEmail: null,
   onboarded: false,
@@ -171,7 +173,6 @@ export function useAppState(): AppState {
       persist();
       emit();
       runPendingTicks();
-      maybeResetForFreeTrial();
     }
   }, []);
   return s;
@@ -273,9 +274,15 @@ export function overallStreak(habits: Habit[], now = new Date()): number {
   return streak;
 }
 
-export function canAddPersonal(s: AppState): boolean {
-  if (s.hasAccount) return true;
-  return s.habits.filter((h) => h.kind === "individual").length < PERSONAL_LIMIT_FREE;
+export function canAddPersonal(_s: AppState): boolean {
+  return true;
+}
+
+/** Ask for an account only 10 days after the very first activity was marked. */
+export const SIGNUP_PROMPT_DAYS = 10;
+export function shouldPromptSignup(s: AppState, now = Date.now()): boolean {
+  if (s.hasAccount || !s.firstActivityAt) return false;
+  return Math.floor((now - s.firstActivityAt) / 86400000) >= SIGNUP_PROMPT_DAYS;
 }
 
 // ---------- actions ----------
@@ -349,14 +356,8 @@ export function markCompleted(id: string) {
           }
         : h,
     );
-    if (already || !s.game) return { ...s, habits };
-    const cap = daysInMonth();
-    const game = {
-      ...s.game,
-      stage: Math.min(cap, s.game.stage + 1),
-      health: Math.min(100, s.game.health + 5),
-    };
-    return { ...s, habits, game };
+    // The world only moves at the end of the day — marking never advances it now.
+    return { ...s, habits, firstActivityAt: s.firstActivityAt ?? Date.now() };
   });
 }
 
@@ -375,9 +376,7 @@ export function markMissed(id: string) {
           }
         : h,
     );
-    if (already || !s.game) return { ...s, habits };
-    const game = { ...s.game, health: Math.max(0, s.game.health - 10) };
-    return { ...s, habits, game };
+    return { ...s, habits, firstActivityAt: s.firstActivityAt ?? Date.now() };
   });
 }
 
@@ -397,18 +396,30 @@ export function clearToday(id: string) {
   }));
 }
 
+/** One submission per day. Stage growth is applied at the end of the day. */
+export function hasLoggedToday(h: Habit, now = new Date()): boolean {
+  return h.individualLogs.includes(todayISO(now));
+}
+
 export function logIndividual(id: string) {
   const iso = todayISO();
   setState((s) => ({
     ...s,
+    firstActivityAt: s.firstActivityAt ?? Date.now(),
     habits: s.habits.map((h) =>
-      h.id === id
-        ? {
-            ...h,
-            individualLogs: [...h.individualLogs, iso],
-            individualStage: Math.min(INDIVIDUAL_MAX_STAGE, h.individualStage + 1),
-          }
+      h.id === id && !h.individualLogs.includes(iso)
+        ? { ...h, individualLogs: [...h.individualLogs, iso] }
         : h,
+    ),
+  }));
+}
+
+export function unlogIndividual(id: string) {
+  const iso = todayISO();
+  setState((s) => ({
+    ...s,
+    habits: s.habits.map((h) =>
+      h.id === id ? { ...h, individualLogs: h.individualLogs.filter((d) => d !== iso) } : h,
     ),
   }));
 }
@@ -462,14 +473,8 @@ export function resetProgressKeepRoutines() {
   }));
 }
 
-export function maybeResetForFreeTrial() {
-  const s = state;
-  if (s.hasAccount) return;
-  if (s.progressResetAt) return;
-  if (!s.firstOpenedAt) return;
-  const days = Math.floor((Date.now() - s.firstOpenedAt) / (1000 * 60 * 60 * 24));
-  if (days >= 7) resetProgressKeepRoutines();
-}
+/** Kept as a no-op: progress is never wiped in the released app. */
+export function maybeResetForFreeTrial() {}
 
 // ---------- Journal ----------
 
@@ -631,8 +636,18 @@ export function runPendingTicks(now = new Date()) {
   setState((s) => ({
     ...s,
     game,
+    habits: settleIndividualStages(s.habits, lastEligibleISO),
     logs: [...s.logs, ...newLogs].slice(-90),
   }));
+}
+
+/** Personal activities advance one stage per logged day, once the day is over. */
+function settleIndividualStages(habits: Habit[], throughISO: string): Habit[] {
+  return habits.map((h) => {
+    if (h.kind !== "individual") return h;
+    const days = new Set(h.individualLogs.filter((d) => d <= throughISO));
+    return { ...h, individualStage: Math.min(INDIVIDUAL_MAX_STAGE, days.size) };
+  });
 }
 
 function isoAdd(iso: string, days: number): string {

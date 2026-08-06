@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Plus, Wand2, Trash2, Check, X, Lock } from "lucide-react";
+import { Plus, Wand2, Trash2, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,8 +9,8 @@ import {
   removeHabit,
   INDIVIDUAL_MAX_STAGE,
   todayISO,
-  canAddPersonal,
-  PERSONAL_LIMIT_FREE,
+  hasLoggedToday,
+  unlogIndividual,
   type GameKind,
 } from "@/lib/store";
 import { TreeGame } from "@/components/games/TreeGame";
@@ -18,7 +18,6 @@ import { SpaceGame } from "@/components/games/SpaceGame";
 import { CatGame } from "@/components/games/CatGame";
 import { TreehouseGame } from "@/components/games/TreehouseGame";
 import { AddHabitDialog } from "@/components/AddHabitDialog";
-import { AccountDialog } from "@/components/AccountDialog";
 
 export const Route = createFileRoute("/personal")({
   head: () => ({
@@ -43,9 +42,7 @@ function GameFor({ kind, stage }: { kind: GameKind; stage: number }) {
 function PersonalPage() {
   const s = useAppState();
   const [addOpen, setAddOpen] = useState(false);
-  const [acctOpen, setAcctOpen] = useState(false);
   const items = useMemo(() => s.habits.filter((h) => h.kind === "individual"), [s.habits]);
-  const canAdd = canAddPersonal(s);
 
   return (
     <div className="min-h-screen px-4 py-6 md:py-10 max-w-2xl mx-auto">
@@ -59,21 +56,10 @@ function PersonalPage() {
             Anything you do at your own pace — every log grows its own little world.
           </p>
         </div>
-        <Button
-          onClick={() => (canAdd ? setAddOpen(true) : setAcctOpen(true))}
-          size="sm"
-          className="rounded-full"
-        >
-          {canAdd ? <><Plus className="w-4 h-4 mr-1" /> Add</> : <><Lock className="w-4 h-4 mr-1" /> Add</>}
+        <Button onClick={() => setAddOpen(true)} size="sm" className="rounded-full">
+          <Plus className="w-4 h-4 mr-1" /> Add
         </Button>
       </div>
-
-      {!canAdd && (
-        <div className="glass-soft rounded-2xl p-3 text-xs text-muted-foreground mb-4 flex items-center gap-2">
-          <Lock className="w-3.5 h-3.5" />
-          You've reached the {PERSONAL_LIMIT_FREE}-activity limit — create an account to add more.
-        </div>
-      )}
 
       {items.length === 0 && (
         <Link to="/" className="glass-pop rounded-2xl p-6 text-center block">
@@ -90,6 +76,7 @@ function PersonalPage() {
           const lastDate = h.individualLogs[h.individualLogs.length - 1];
           const recent = h.individualLogs.slice(-10).reverse();
           const pct = Math.round((h.individualStage / INDIVIDUAL_MAX_STAGE) * 100);
+          const loggedToday = hasLoggedToday(h);
           return (
             <div key={h.id} className="glass-pop rounded-3xl p-4">
               <div className="flex items-center justify-between mb-2">
@@ -114,7 +101,7 @@ function PersonalPage() {
                 <span>
                   Stage {h.individualStage} / {INDIVIDUAL_MAX_STAGE}
                 </span>
-                <span>{h.individualLogs.length} total logs {lastDate ? `· last ${lastDate === todayISO() ? "today" : lastDate.slice(5)}` : ""}</span>
+                <span>{loggedToday ? "Counted today · " : ""}{h.individualLogs.length} total logs {lastDate ? `· last ${lastDate === todayISO() ? "today" : lastDate.slice(5)}` : ""}</span>
               </div>
               <div className="h-2 rounded-full bg-white/50 overflow-hidden mb-3">
                 <div
@@ -128,15 +115,18 @@ function PersonalPage() {
                   className="flex-1 rounded-xl"
                   onClick={() => {
                     logIndividual(h.id);
-                    toast.success(`+1 for ${h.name}`);
+                    toast.success(`Marked done for today — ${h.name} grows tonight.`);
                   }}
                 >
-                  <Check className="w-4 h-4 mr-1" /> I did it
+                  <Check className="w-4 h-4 mr-1" /> {loggedToday ? "Done today" : "I did it"}
                 </Button>
                 <Button
                   variant="secondary"
                   className="flex-1 rounded-xl"
-                  onClick={() => toast(`No worries — try again when you feel like it.`)}
+                  onClick={() => {
+                    unlogIndividual(h.id);
+                    toast("Marked as not done for today.");
+                  }}
                 >
                   <X className="w-4 h-4 mr-1" /> Didn't
                 </Button>
@@ -165,7 +155,6 @@ function PersonalPage() {
       </div>
 
       <AddHabitDialog open={addOpen} onOpenChange={setAddOpen} defaultKind="individual" />
-      <AccountDialog open={acctOpen} onOpenChange={setAcctOpen} />
     </div>
   );
 }

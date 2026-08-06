@@ -26,7 +26,7 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         <DialogHeader>
           <DialogTitle className="font-display text-2xl">Save your progress</DialogTitle>
           <DialogDescription>
-            You've been going for a week! Create an account so your streaks and game state don't disappear.
+            You've been growing your world for 10 days. Create an account so your streaks and progress stay safe.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
