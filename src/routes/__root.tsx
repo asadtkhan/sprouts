@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react"; // Added useState here
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
@@ -132,6 +132,8 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter(); // Call the router to handle navigation
+  const [showSplash, setShowSplash] = useState(true); // State for the splash screen
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -151,8 +153,39 @@ function RootComponent() {
     return () => { cancelled = true; clearInterval(id); };
   }, []);
 
+  // Timer and First-Time User Logic
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Hide splash after 3 seconds
+      setShowSplash(false);
+
+      // Check for first time visitor
+      const hasVisited = localStorage.getItem("sprout_has_visited");
+      
+      if (!hasVisited) {
+        // Log the visit and route to the description page
+        localStorage.setItem("sprout_has_visited", "true");
+        // Change '/about' to the actual path of your description/onboarding screen
+        router.navigate({ to: '/about' }); 
+      }
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [router]);
+
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Splash Screen Overlay */}
+      {showSplash && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background">
+          <img
+            src="/splash.png"
+            alt="Sprout Splash"
+            className="h-full w-full object-cover"
+          />
+        </div>
+      )}
+      
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <BottomNav />
