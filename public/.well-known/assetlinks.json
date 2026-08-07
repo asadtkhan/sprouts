@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.netlify.sproutshabits.twa",
+        "sha256_cert_fingerprints": ["45:0E:77:73:EE:02:9A:5E:F7:EC:91:61:43:D0:BE:DF:6A:69:A9:EE:38:85:65:CF:C8:55:F8:2A:2D:58:A2:A1"]
+      }
+    }]
