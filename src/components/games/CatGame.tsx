@@ -1,6 +1,6 @@
 // Cat game — 31 stages from kitten to grown cat.
-import { GameDefs, Pedestal, Sparkles, FX_KEYFRAMES } from "./fx";
-
+import { useState } from "react";
+import { GameDefs, Pedestal, Sparkles, FX_KEYFRAMES, Burst, useBurstOnIncrease } from "./fx";
 
 interface Props {
   stage: number;
@@ -24,15 +24,33 @@ export function CatGame({ stage, health }: Props) {
       ? "M144 168 Q160 182 176 168"
       : "M150 170 Q160 176 170 170";
 
+  const levelUp = useBurstOnIncrease(capped);
+  const [poke, setPoke] = useState(0);
+  const react = () => setPoke((p) => p + 1);
+
   return (
-    <div className="relative w-full h-full">
+    <div
+      className="relative w-full h-full cursor-pointer select-none"
+      role="button"
+      tabIndex={0}
+      aria-label={`Cat companion, stage ${s} of ${MAX}. Tap to give it some scratches.`}
+      onClick={react}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          react();
+        }
+      }}
+    >
       <style>{`
         @keyframes catHead { 0%,100%{ transform: rotate(-3deg) } 50%{ transform: rotate(3deg) } }
         @keyframes catSlump { 0%,100%{ transform: rotate(-8deg) translateY(2px) } 50%{ transform: rotate(-4deg) translateY(4px) } }
         @keyframes catTail { 0%,100%{ transform: rotate(-8deg) } 50%{ transform: rotate(14deg) } }
+        @keyframes catTailHappy { 0%,100%{ transform: rotate(-14deg) } 50%{ transform: rotate(24deg) } }
         @keyframes catBlink { 0%,92%,100%{ transform: scaleY(1) } 95%{ transform: scaleY(0.1) } }
         @keyframes catBreath { 0%,100%{ transform: scale(1) } 50%{ transform: scale(1.02) } }
         @keyframes zFloat { 0%{ transform: translate(0,0); opacity: 0 } 20%{ opacity: 0.9 } 100%{ transform: translate(14px,-24px); opacity: 0 } }
+        @keyframes heartFloat { 0%{ transform: translate(0,0) scale(0.6); opacity: 0 } 25%{ opacity: 1; transform: translate(0,-6px) scale(1) } 100%{ transform: translate(0,-46px) scale(1.1); opacity: 0 } }
         ${FX_KEYFRAMES}
       `}</style>
 
@@ -57,58 +75,153 @@ export function CatGame({ stage, health }: Props) {
         <ellipse cx="160" cy="256" rx="60" ry="9" fill="#fff" opacity="0.45" />
         <rect width="320" height="320" rx="24" fill="url(#cat-vignette)" />
 
-        <g filter="url(#cat-soft)" transform={`translate(160 220) scale(${scale}) translate(-160 -180)`} style={{ animation: "catBreath 3s ease-in-out infinite", transformOrigin: "160px 220px" }}>
-
-          <ellipse cx="160" cy="220" rx="60" ry="46" fill={furA} />
-          {/* tail sway */}
-          <g style={{ animation: "catTail 2.4s ease-in-out infinite", transformOrigin: "215px 220px" }}>
-            <path d="M215 220 Q245 210 240 180" stroke={furA} strokeWidth="14" fill="none" strokeLinecap="round" />
-          </g>
-          <ellipse cx="130" cy="258" rx="12" ry="10" fill={furB} />
-          <ellipse cx="190" cy="258" rx="12" ry="10" fill={furB} />
-          {/* head tilt */}
-          <g style={{ animation: "catHead 3.6s ease-in-out infinite", transformOrigin: "160px 175px" }}>
-            <ellipse cx="160" cy="160" rx="52" ry="46" fill={furA} />
-            <path d="M118 130 L110 90 L145 120 Z" fill={furA} />
-            <path d="M202 130 L210 90 L175 120 Z" fill={furA} />
-            <path d="M124 122 L120 100 L138 118 Z" fill="#ffb3c1" />
-            <path d="M196 122 L200 100 L182 118 Z" fill="#ffb3c1" />
-            <circle cx="132" cy="170" r="8" fill={cheek} opacity="0.7" />
-            <circle cx="188" cy="170" r="8" fill={cheek} opacity="0.7" />
-            {sick ? (
-              <>
-                <path d="M138 152 L150 158" stroke="#3a2a2a" strokeWidth="3" strokeLinecap="round" />
-                <path d="M150 152 L138 158" stroke="#3a2a2a" strokeWidth="3" strokeLinecap="round" />
-                <path d="M170 152 L182 158" stroke="#3a2a2a" strokeWidth="3" strokeLinecap="round" />
-                <path d="M182 152 L170 158" stroke="#3a2a2a" strokeWidth="3" strokeLinecap="round" />
-              </>
-            ) : capped >= 6 ? (
-              <>
-                <path d="M138 155 Q144 148 150 155" stroke="#3a2a2a" strokeWidth="3" fill="none" strokeLinecap="round" />
-                <path d="M170 155 Q176 148 182 155" stroke="#3a2a2a" strokeWidth="3" fill="none" strokeLinecap="round" />
-              </>
-            ) : (
-              <g style={{ animation: "catBlink 4s ease-in-out infinite", transformOrigin: "160px 155px" }}>
-                <ellipse cx="144" cy="155" rx="4" ry="6" fill="#3a2a2a" />
-                <ellipse cx="176" cy="155" rx="4" ry="6" fill="#3a2a2a" />
-                <circle cx="145" cy="153" r="1.2" fill="#fff" />
-                <circle cx="177" cy="153" r="1.2" fill="#fff" />
-              </g>
-            )}
-            <path d="M156 165 L164 165 L160 170 Z" fill="#ff8fa3" />
-            <path d={mouth} stroke="#3a2a2a" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-            <line x1="110" y1="168" x2="130" y2="170" stroke="#3a2a2a" strokeWidth="1.2" />
-            <line x1="110" y1="175" x2="130" y2="174" stroke="#3a2a2a" strokeWidth="1.2" />
-            <line x1="210" y1="168" x2="190" y2="170" stroke="#3a2a2a" strokeWidth="1.2" />
-            <line x1="210" y1="175" x2="190" y2="174" stroke="#3a2a2a" strokeWidth="1.2" />
-            {capped >= 8 && (
-              <g>
-                <path d="M132 92 L145 105 L160 88 L175 105 L188 92 L184 118 L136 118 Z" fill="#ffd76a" stroke="#c99a2a" strokeWidth="1.5" />
-                <circle cx="160" cy="98" r="3" fill="#ff6b6b" />
-              </g>
-            )}
+        <g
+          key={`poke-${poke}`}
+          style={
+            poke
+              ? { animation: "pokeBounce 0.5s ease-out", transformOrigin: "160px 220px" }
+              : undefined
+          }
+        >
+          <g
+            filter="url(#cat-soft)"
+            transform={`translate(160 220) scale(${scale}) translate(-160 -180)`}
+            style={{
+              animation: "catBreath 3s ease-in-out infinite",
+              transformOrigin: "160px 220px",
+            }}
+          >
+            <ellipse cx="160" cy="220" rx="60" ry="46" fill={furA} />
+            {/* tail sway — wags faster and happier right after a tap */}
+            <g
+              style={{
+                animation: `${poke ? "catTailHappy 0.6s" : "catTail 2.4s"} ease-in-out infinite`,
+                transformOrigin: "215px 220px",
+              }}
+            >
+              <path
+                d="M215 220 Q245 210 240 180"
+                stroke={furA}
+                strokeWidth="14"
+                fill="none"
+                strokeLinecap="round"
+              />
+            </g>
+            <ellipse cx="130" cy="258" rx="12" ry="10" fill={furB} />
+            <ellipse cx="190" cy="258" rx="12" ry="10" fill={furB} />
+            {/* head tilt */}
+            <g
+              style={{
+                animation: "catHead 3.6s ease-in-out infinite",
+                transformOrigin: "160px 175px",
+              }}
+            >
+              <ellipse cx="160" cy="160" rx="52" ry="46" fill={furA} />
+              <path d="M118 130 L110 90 L145 120 Z" fill={furA} />
+              <path d="M202 130 L210 90 L175 120 Z" fill={furA} />
+              <path d="M124 122 L120 100 L138 118 Z" fill="#ffb3c1" />
+              <path d="M196 122 L200 100 L182 118 Z" fill="#ffb3c1" />
+              <circle cx="132" cy="170" r="8" fill={cheek} opacity="0.7" />
+              <circle cx="188" cy="170" r="8" fill={cheek} opacity="0.7" />
+              {sick ? (
+                <>
+                  <path
+                    d="M138 152 L150 158"
+                    stroke="#3a2a2a"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M150 152 L138 158"
+                    stroke="#3a2a2a"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M170 152 L182 158"
+                    stroke="#3a2a2a"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M182 152 L170 158"
+                    stroke="#3a2a2a"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                </>
+              ) : capped >= 6 ? (
+                <>
+                  <path
+                    d="M138 155 Q144 148 150 155"
+                    stroke="#3a2a2a"
+                    strokeWidth="3"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M170 155 Q176 148 182 155"
+                    stroke="#3a2a2a"
+                    strokeWidth="3"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                </>
+              ) : (
+                <g
+                  style={{
+                    animation: "catBlink 4s ease-in-out infinite",
+                    transformOrigin: "160px 155px",
+                  }}
+                >
+                  <ellipse cx="144" cy="155" rx="4" ry="6" fill="#3a2a2a" />
+                  <ellipse cx="176" cy="155" rx="4" ry="6" fill="#3a2a2a" />
+                  <circle cx="145" cy="153" r="1.2" fill="#fff" />
+                  <circle cx="177" cy="153" r="1.2" fill="#fff" />
+                </g>
+              )}
+              <path d="M156 165 L164 165 L160 170 Z" fill="#ff8fa3" />
+              <path
+                d={mouth}
+                stroke="#3a2a2a"
+                strokeWidth="2.5"
+                fill="none"
+                strokeLinecap="round"
+              />
+              <line x1="110" y1="168" x2="130" y2="170" stroke="#3a2a2a" strokeWidth="1.2" />
+              <line x1="110" y1="175" x2="130" y2="174" stroke="#3a2a2a" strokeWidth="1.2" />
+              <line x1="210" y1="168" x2="190" y2="170" stroke="#3a2a2a" strokeWidth="1.2" />
+              <line x1="210" y1="175" x2="190" y2="174" stroke="#3a2a2a" strokeWidth="1.2" />
+              {capped >= 8 && (
+                <g>
+                  <path
+                    d="M132 92 L145 105 L160 88 L175 105 L188 92 L184 118 L136 118 Z"
+                    fill="#ffd76a"
+                    stroke="#c99a2a"
+                    strokeWidth="1.5"
+                  />
+                  <circle cx="160" cy="98" r="3" fill="#ff6b6b" />
+                </g>
+              )}
+            </g>
           </g>
         </g>
+
+        {poke > 0 && (
+          <g key={`hearts-${poke}`}>
+            {[0, 0.15, 0.3].map((delay, i) => (
+              <text
+                key={i}
+                x={130 + i * 30}
+                y={130}
+                fontSize="16"
+                style={{ animation: `heartFloat 1.1s ease-out ${delay}s forwards` }}
+              >
+                💛
+              </text>
+            ))}
+          </g>
+        )}
 
         {sick && (
           <g>
@@ -134,11 +247,20 @@ export function CatGame({ stage, health }: Props) {
             ))}
           </g>
         )}
+
+        {levelUp > 0 && (
+          <Burst
+            key={levelUp}
+            trigger={levelUp}
+            cx={160}
+            cy={200}
+            colors={["#ffd76a", "#ff9ec2", "#ffb3b3", "#fff5c2"]}
+          />
+        )}
       </svg>
     </div>
   );
 }
-
 
 // A tiny cat body (no room background) used in the journal roamer.
 export function LittleCat({ stage }: { stage: number }) {
@@ -153,7 +275,13 @@ export function LittleCat({ stage }: { stage: number }) {
       <g transform={`translate(60 65) scale(${scale}) translate(-60 -60)`}>
         <ellipse cx="60" cy="80" rx="28" ry="20" fill="#f4c186" />
         <g style={{ animation: "lcTail 1.2s ease-in-out infinite", transformOrigin: "85px 80px" }}>
-          <path d="M85 80 Q108 70 102 50" stroke="#f4c186" strokeWidth="7" fill="none" strokeLinecap="round" />
+          <path
+            d="M85 80 Q108 70 102 50"
+            stroke="#f4c186"
+            strokeWidth="7"
+            fill="none"
+            strokeLinecap="round"
+          />
         </g>
         <g style={{ animation: "lcHead 1.6s ease-in-out infinite", transformOrigin: "60px 55px" }}>
           <ellipse cx="60" cy="55" rx="22" ry="20" fill="#f4c186" />
@@ -162,7 +290,13 @@ export function LittleCat({ stage }: { stage: number }) {
           <ellipse cx="52" cy="55" rx="2" ry="3" fill="#3a2a2a" />
           <ellipse cx="68" cy="55" rx="2" ry="3" fill="#3a2a2a" />
           <path d="M57 62 L63 62 L60 66 Z" fill="#ff8fa3" />
-          <path d="M55 68 Q60 72 65 68" stroke="#3a2a2a" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+          <path
+            d="M55 68 Q60 72 65 68"
+            stroke="#3a2a2a"
+            strokeWidth="1.2"
+            fill="none"
+            strokeLinecap="round"
+          />
         </g>
       </g>
     </svg>
