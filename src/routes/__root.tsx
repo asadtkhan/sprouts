@@ -7,13 +7,14 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react"; // Added useState here
+import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { BottomNav } from "@/components/BottomNav";
 import { TourGuide } from "@/components/TourGuide";
+import { SplashScreen } from "@/components/SplashScreen";
 
 function NotFoundComponent() {
   return (
@@ -63,6 +64,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           >
             Try again
           </button>
+
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
@@ -89,17 +91,29 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "Sprout — Grow habits, grow a world" },
       {
         property: "og:description",
-        content: "A cozy daily habit tracker where your habits nurture a tree, a rocket mission, or a kitten.",
+        content:
+          "A cozy daily habit tracker where your habits nurture a tree, a rocket mission, or a kitten.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Sprout — Grow habits, grow a world" },
-      { name: "twitter:description", content: "A cozy daily habit tracker where your habits nurture a tree, a rocket mission, or a kitten." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9f5f6728-cf86-416e-aab1-f58b3c85688c/id-preview-628f6a5c--a36c1e9a-8114-4dc0-a9ab-5620b7a60690.lovable.app-1783965446028.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9f5f6728-cf86-416e-aab1-f58b3c85688c/id-preview-628f6a5c--a36c1e9a-8114-4dc0-a9ab-5620b7a60690.lovable.app-1783965446028.png" },
+      {
+        name: "twitter:description",
+        content:
+          "A cozy daily habit tracker where your habits nurture a tree, a rocket mission, or a kitten.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9f5f6728-cf86-416e-aab1-f58b3c85688c/id-preview-628f6a5c--a36c1e9a-8114-4dc0-a9ab-5620b7a60690.lovable.app-1783965446028.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9f5f6728-cf86-416e-aab1-f58b3c85688c/id-preview-628f6a5c--a36c1e9a-8114-4dc0-a9ab-5620b7a60690.lovable.app-1783965446028.png",
+      },
     ],
     links: [
-      { rel: "manifest", href: "/manifest.json" },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -132,14 +146,6 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const router = useRouter(); // Call the router to handle navigation
-  const [showSplash, setShowSplash] = useState(true); // State for the splash screen
-
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(console.error);
-    }
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -150,47 +156,21 @@ function RootComponent() {
     }
     tick();
     const id = setInterval(tick, 5 * 60 * 1000);
-    return () => { cancelled = true; clearInterval(id); };
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
   }, []);
-
-  // Timer and First-Time User Logic
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      // Hide splash after 3 seconds
-      setShowSplash(false);
-
-      // Check for first time visitor
-      const hasVisited = localStorage.getItem("sprout_has_visited");
-      
-      if (!hasVisited) {
-        // Log the visit and route to the description page
-        localStorage.setItem("sprout_has_visited", "true");
-        // Change '/about' to the actual path of your description/onboarding screen
-        router.navigate({ to: '/about' }); 
-      }
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [router]);
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Splash Screen Overlay */}
-      {showSplash && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background">
-          <img
-            src="/splash.png"
-            alt="Sprout Splash"
-            className="h-full w-full object-cover"
-          />
-        </div>
-      )}
-      
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-      <BottomNav />
-      <TourGuide />
-      <Toaster position="top-center" />
+      <SplashScreen>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <BottomNav />
+        <TourGuide />
+        <Toaster position="top-center" />
+      </SplashScreen>
     </QueryClientProvider>
   );
 }
