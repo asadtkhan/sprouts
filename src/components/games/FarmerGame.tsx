@@ -217,3 +217,5 @@ export function FarmerGame({ fruits, elapsedMs, running }: Props) {
         )}
       </svg>
     </div>
+  );
+}
