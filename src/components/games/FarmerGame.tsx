@@ -136,65 +136,66 @@ export function FarmerGame({ fruits, elapsedMs, running }: Props) {
               : undefined
           }
         >
-          <g
-            style={{ animation: running ? "farmerReach 1.4s ease-in-out infinite" : "none" }}
-            transform="translate(228 188) scale(1.1)"
-          >
-            {/* legs on ladder rung */}
-            <rect x="-6" y="24" width="5" height="18" fill="#2a4373" />
-            <rect x="1" y="24" width="5" height="18" fill="#2a4373" />
-            <rect x="-7" y="40" width="7" height="4" rx="1.5" fill="#3a2a1a" />
-            <rect x="1" y="40" width="7" height="4" rx="1.5" fill="#3a2a1a" />
-            {/* body */}
-            <rect x="-10" y="-2" width="20" height="28" rx="5" fill="#3a6cbf" />
-            <rect x="-10" y="-2" width="20" height="6" rx="3" fill="#5789d8" />
-            {/* free arm holding ladder */}
-            <path
-              d="M9 4 Q20 10 18 24"
-              stroke="#f3c290"
-              strokeWidth="4"
-              fill="none"
-              strokeLinecap="round"
-            />
-            {/* head */}
-            <circle cx="0" cy="-12" r="8" fill="#f3c290" />
-            <ellipse cx="0" cy="-18" rx="15" ry="3.5" fill="#e2b970" />
-            <ellipse cx="0" cy="-20" rx="7" ry="3.5" fill="#c9a256" />
-            <circle cx="-2.5" cy="-13" r="0.9" fill="#3a2a1a" />
-            <circle cx="2.5" cy="-13" r="0.9" fill="#3a2a1a" />
-            <path
-              d="M-2.5 -10 Q0 -8 2.5 -10"
-              stroke="#5a3a1a"
-              strokeWidth="1.2"
-              fill="none"
-              strokeLinecap="round"
-            />
-            {/* plucking arm — reaches up into the tree */}
-            <g
-              style={{
-                animation: running ? "armPluck 3s ease-in-out infinite" : "none",
-                transformOrigin: "-9px 4px",
-              }}
-            >
+          {/* 1. Static Positioning Wrapper: This keeps the farmer on the ladder */}
+          <g transform="translate(228 188) scale(1.1)">
+            {/* 2. Animation Wrapper: This handles the bounce without overriding position */}
+            <g style={{ animation: running ? "farmerReach 1.4s ease-in-out infinite" : "none" }}>
+              {/* legs on ladder rung */}
+              <rect x="-6" y="24" width="5" height="18" fill="#2a4373" />
+              <rect x="1" y="24" width="5" height="18" fill="#2a4373" />
+              <rect x="-7" y="40" width="7" height="4" rx="1.5" fill="#3a2a1a" />
+              <rect x="1" y="40" width="7" height="4" rx="1.5" fill="#3a2a1a" />
+              {/* body */}
+              <rect x="-10" y="-2" width="20" height="28" rx="5" fill="#3a6cbf" />
+              <rect x="-10" y="-2" width="20" height="6" rx="3" fill="#5789d8" />
+              {/* free arm holding ladder */}
               <path
-                d="M-9 4 Q-22 -12 -28 -30"
+                d="M9 4 Q20 10 18 24"
                 stroke="#f3c290"
-                strokeWidth="4.5"
+                strokeWidth="4"
                 fill="none"
                 strokeLinecap="round"
               />
-              <circle cx="-28" cy="-30" r="4" fill="#f3c290" />
-            </g>
-            {/* falling fruit toward basket */}
-            {running && (
-              <circle
-                cx="-6"
-                cy="-8"
-                r="3.5"
-                fill="#e04b4b"
-                style={{ animation: "fruitDrop 3s ease-in infinite" }}
+              {/* head */}
+              <circle cx="0" cy="-12" r="8" fill="#f3c290" />
+              <ellipse cx="0" cy="-18" rx="15" ry="3.5" fill="#e2b970" />
+              <ellipse cx="0" cy="-20" rx="7" ry="3.5" fill="#c9a256" />
+              <circle cx="-2.5" cy="-13" r="0.9" fill="#3a2a1a" />
+              <circle cx="2.5" cy="-13" r="0.9" fill="#3a2a1a" />
+              <path
+                d="M-2.5 -10 Q0 -8 2.5 -10"
+                stroke="#5a3a1a"
+                strokeWidth="1.2"
+                fill="none"
+                strokeLinecap="round"
               />
-            )}
+              {/* plucking arm — reaches up into the tree */}
+              <g
+                style={{
+                  animation: running ? "armPluck 3s ease-in-out infinite" : "none",
+                  transformOrigin: "-9px 4px",
+                }}
+              >
+                <path
+                  d="M-9 4 Q-22 -12 -28 -30"
+                  stroke="#f3c290"
+                  strokeWidth="4.5"
+                  fill="none"
+                  strokeLinecap="round"
+                />
+                <circle cx="-28" cy="-30" r="4" fill="#f3c290" />
+              </g>
+              {/* falling fruit toward basket */}
+              {running && (
+                <circle
+                  cx="-6"
+                  cy="-8"
+                  r="3.5"
+                  fill="#e04b4b"
+                  style={{ animation: "fruitDrop 3s ease-in infinite" }}
+                />
+              )}
+            </g>
           </g>
         </g>
 
