@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { BottomNav } from "@/components/BottomNav";
 import { TourGuide } from "@/components/TourGuide";
+import { SplashScreen } from "@/components/SplashScreen";
 
 function NotFoundComponent() {
   return (
@@ -137,15 +138,6 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const router = useRouter();
-  const [showSplash, setShowSplash] = useState(true);
-
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(console.error);
-    }
-  }, []);
-
   useEffect(() => {
     let cancelled = false;
     async function tick() {
@@ -159,36 +151,15 @@ function RootComponent() {
   }, []);
 
   // Timer and First-Time User Logic
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-      const hasVisited = localStorage.getItem("sprout_has_visited");
-      
-      if (!hasVisited) {
-        localStorage.setItem("sprout_has_visited", "true");
-        router.navigate({ to: '/' }); 
-      }
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [router]);
-
   return (
     <QueryClientProvider client={queryClient}>
-      {showSplash && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background">
-          <img
-            src="/splash.jpg"
-            alt="Sprout Splash"
-            className="h-full w-full object-cover"
-          />
-        </div>
-      )}
-      
-      <Outlet />
-      <BottomNav />
-      <TourGuide />
-      <Toaster position="top-center" />
+      <SplashScreen>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <BottomNav />
+        <TourGuide />
+        <Toaster position="top-center" />
+      </SplashScreen>
     </QueryClientProvider>
   );
 }
