@@ -8,6 +8,7 @@ import {
   BookHeart,
   LineChart,
   Sparkles,
+  Flag,
   ArrowLeft,
   ArrowRight,
   ArrowUp,
@@ -61,20 +62,13 @@ const STEPS: Step[] = [
   },
   {
     route: "/",
-    target: "home-focus",
-    icon: Timer,
-    label: "Focus",
-    title: "Focus session",
-    body: "Start a session here. A farmer plucks one fruit for every minute you stay focused, and your fruit count sits on the right.",
+    target: "home-race",
+    icon: Flag,
+    label: "Race",
+    title: "Race a friend",
+    body: "Pick one activity to share with a friend, swap a race code, and every day you both keep it your cars drive a lap closer to the finish line.",
   },
-  {
-    route: "/",
-    target: "home-journal",
-    icon: BookHeart,
-    label: "Journal",
-    title: "Journal",
-    body: "A quiet space with no game to win — just your thoughts and a kitten chasing its yarn ball.",
-  },
+
   {
     route: "/daily",
     target: "daily-card",
@@ -97,7 +91,7 @@ const STEPS: Step[] = [
     icon: Timer,
     label: "Session",
     title: "Open-ended or planned",
-    body: "Run a session with no end time, or plan work and rest intervals before you begin.",
+    body: "Reach this any time from the Focus tab. Run a session with no end time, or plan work and rest intervals before you begin.",
   },
   {
     route: "/journal",
@@ -121,8 +115,9 @@ const STEPS: Step[] = [
     icon: Compass,
     label: "Navigate",
     title: "Move around from here",
-    body: "This bar is always with you: Home, Daily, Journal, Tracking and Profile. You can replay this tour any time from Profile.",
+    body: "This bar is always with you: Home, Focus, Journal, Tracking and Profile. Daily rituals, personal activities and the friend race live on the Home screen. Replay this tour any time from Profile.",
   },
+
 ];
 
 type Rect = { top: number; left: number; width: number; height: number };

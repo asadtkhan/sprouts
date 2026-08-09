@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { Plus, Trash2, Sparkles, Check, X, Flame, Bell, BellOff, Moon } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Plus, Trash2, Sparkles, Check, X, Flame, Bell, BellOff, Moon, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   useAppState,
@@ -54,12 +54,18 @@ function DailyPage() {
   return (
     <div className="min-h-screen px-4 py-6 md:py-10 max-w-2xl mx-auto">
       <div className="mb-6 flex items-end justify-between">
-        <div>
-          <div className="text-xs uppercase tracking-widest text-muted-foreground">
-            {today.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+        <div className="flex items-end gap-3">
+          <Link to="/" className="w-9 h-9 mb-1 rounded-full glass-soft flex items-center justify-center shrink-0">
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+          <div>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground">
+              {today.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+            </div>
+            <h1 className="font-display text-3xl md:text-4xl">Daily rituals</h1>
           </div>
-          <h1 className="font-display text-3xl md:text-4xl">Daily rituals</h1>
         </div>
+
         <Button onClick={() => setAddOpen(true)} size="sm" className="rounded-full">
           <Plus className="w-4 h-4 mr-1" /> Add
         </Button>
