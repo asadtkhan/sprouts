@@ -164,7 +164,11 @@ export function useRace(): RaceState {
       setLoading(false);
       return;
     }
-    setLoading(true);
+    // Only show the full-page loading state on the very first fetch for this
+    // identity. Later refreshes (after marking today, or from a realtime
+    // update) happen quietly in the background so the board never unmounts
+    // and flashes back to "Loading your race…".
+    if (!race) setLoading(true);
     (async () => {
       const { data: r } = await supabase
         .from("races")
