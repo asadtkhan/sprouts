@@ -288,7 +288,7 @@ export function SpaceGame({ stage, health }: Props) {
           <g style={(critical || isFailed) ? { animation: "warnBlink 0.8s ease-in-out infinite" } : undefined}>
             <rect x="100" y="12" width="120" height="22" rx="11" fill="#000" opacity="0.6" />
             <text x="160" y="27" textAnchor="middle" fontSize="11" fill="#ffb08a" fontWeight="bold">
-              {isFailed ? "❌ SYSTEM FAILURE" : critical ? "⚠ CRITICAL HULL" : "⚠ LOW FUEL"}
+              {isFailed ? "Mission Failed" : critical ? "Critical Damage" : "Fuel is Low"}
             </text>
           </g>
         )}
