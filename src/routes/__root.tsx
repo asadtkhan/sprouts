@@ -101,7 +101,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "manifest", href: "/manifest.json" },
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      
+      // The updated browser tab favicon
+      { rel: "icon", href: "/icon-192x192.png", type: "image/png" },
+      // The new iOS bookmark icon
+      { rel: "apple-touch-icon", href: "/icon-192x192.png" },
+      
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -161,7 +166,7 @@ function RootComponent() {
       
       if (!hasVisited) {
         localStorage.setItem("sprout_has_visited", "true");
-        router.navigate({ to: "/" });
+        router.navigate({ to: '/' }); 
       }
     }, 3000);
 
