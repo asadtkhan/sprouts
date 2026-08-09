@@ -276,70 +276,122 @@ export function TourGuide() {
 
   return (
     <div className="fixed inset-0 z-[60] pointer-events-none">
-      {/* dimmer + spotlight ring */}
+      {/* dimmer + crisp spotlight ring */}
       {spot ? (
         <div
-          className="absolute rounded-3xl transition-all duration-300 ease-out ring-2 ring-primary/80"
+          className="absolute rounded-3xl transition-all duration-300 ease-out"
           style={{
             top: spot.top,
             left: spot.left,
             width: spot.width,
             height: spot.height,
-            boxShadow: "0 0 0 9999px rgba(24,20,45,0.45)",
+            boxShadow: "0 0 0 2.5px oklch(0.58 0.14 165), 0 0 0 9999px rgba(20,16,38,0.55)",
           }}
         />
       ) : (
-        <div className="absolute inset-0 bg-[rgba(24,20,45,0.45)]" />
+        <div className="absolute inset-0 bg-[rgba(20,16,38,0.55)]" />
+      )}
+      {/* soft breathing glow around the spotlight */}
+      {spot && (
+        <div
+          className="absolute rounded-3xl pointer-events-none transition-all duration-300 ease-out tour-glow-pulse"
+          style={{
+            top: spot.top - 3,
+            left: spot.left - 3,
+            width: spot.width + 6,
+            height: spot.height + 6,
+            boxShadow: "0 0 26px 4px oklch(0.58 0.14 165 / 0.45)",
+          }}
+        />
       )}
 
       {/* pointing arrow */}
       {showArrow && (
-        <div
-          className="absolute text-primary drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)] transition-all duration-300"
-          style={{ top: arrowTop, left: arrowLeft, animation: "tour-bounce 1.1s ease-in-out infinite" }}
-        >
-          <div
-            className="rounded-full bg-card border border-border flex items-center justify-center"
-            style={{ width: arrowSize, height: arrowSize }}
-          >
-            {below ? (
-              <ArrowUp className={compact ? "w-4 h-4" : "w-5 h-5"} />
-            ) : (
-              <ArrowDown className={compact ? "w-4 h-4" : "w-5 h-5"} />
-            )}
+        <div className="absolute tour-bounce" style={{ top: arrowTop, left: arrowLeft }}>
+          <div className="relative flex items-center justify-center">
+            <div
+              className="absolute inset-0 rounded-full blur-md tour-glow-pulse"
+              style={{ background: "oklch(0.58 0.14 165 / 0.55)" }}
+            />
+            <div
+              className="relative rounded-full flex items-center justify-center text-white"
+              style={{
+                width: arrowSize,
+                height: arrowSize,
+                background: "linear-gradient(150deg, oklch(0.66 0.13 165), oklch(0.5 0.15 165))",
+                boxShadow: "0 8px 18px -6px oklch(0.5 0.15 165 / 0.7), inset 0 1px 0 0 oklch(1 0 0 / 0.35)",
+              }}
+            >
+              {below ? (
+                <ArrowUp className={compact ? "w-4 h-4" : "w-5 h-5"} strokeWidth={2.5} />
+              ) : (
+                <ArrowDown className={compact ? "w-4 h-4" : "w-5 h-5"} strokeWidth={2.5} />
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      <style>{`@keyframes tour-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(${
-        below ? "6px" : "-6px"
-      })}}`}</style>
+      <style>{`
+        @keyframes tour-bounce-y{0%,100%{transform:translateY(0)}50%{transform:translateY(${below ? "6px" : "-6px"})}}
+        .tour-bounce{animation:tour-bounce-y 1.3s cubic-bezier(0.45,0,0.55,1) infinite}
+        @keyframes tour-pulse{0%,100%{opacity:0.55;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+        .tour-glow-pulse{animation:tour-pulse 2.2s ease-in-out infinite}
+        @keyframes tour-shimmer{0%{transform:translateX(-120%)}100%{transform:translateX(220%)}}
+        .tour-shimmer{animation:tour-shimmer 2.4s ease-in-out infinite}
+        @keyframes tour-step-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        .tour-step-in{animation:tour-step-in 320ms cubic-bezier(0.16,1,0.3,1) both}
+        @media (prefers-reduced-motion: reduce){
+          .tour-bounce,.tour-glow-pulse,.tour-shimmer,.tour-step-in{animation:none !important}
+        }
+      `}</style>
 
       {/* coach card */}
       <div
         ref={cardRef}
-        className="pointer-events-auto absolute inset-x-2.5 sm:inset-x-4 mx-auto w-auto max-w-md rounded-3xl bg-card/95 backdrop-blur-xl border border-border shadow-[0_12px_40px_-12px_rgba(60,50,120,0.45)] transition-all duration-300 flex flex-col overflow-y-auto"
-        style={{ top: cardTop, maxHeight: maxCardH }}
+        className="glass-strong pointer-events-auto absolute inset-x-2.5 sm:inset-x-4 mx-auto w-auto max-w-md rounded-3xl transition-all duration-300 flex flex-col overflow-y-auto"
+        style={{ top: cardTop, maxHeight: maxCardH, boxShadow: "var(--glass-shadow)" }}
       >
+        <div
+          className="h-[3px] w-full shrink-0"
+          style={{
+            background:
+              "linear-gradient(90deg, oklch(0.58 0.14 165), oklch(0.86 0.08 235), oklch(0.58 0.14 165 / 0.15))",
+          }}
+        />
         <div className="px-4 pt-3.5 shrink-0">
           <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
             <span>
               Step {i + 1} of {STEPS.length}
             </span>
-            <button onClick={finish} className="flex items-center gap-1 hover:text-foreground transition">
+            <button onClick={finish} className="flex items-center gap-1 hover:text-primary transition">
               Skip <X className="w-3 h-3" />
             </button>
           </div>
           <div className="relative h-1.5 rounded-full bg-foreground/10 overflow-hidden">
             <div
-              className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary/70 to-primary transition-all duration-500"
-              style={{ width: `${pct}%` }}
-            />
+              className="absolute inset-y-0 left-0 rounded-full transition-all duration-500 overflow-hidden"
+              style={{
+                width: `${pct}%`,
+                background: "linear-gradient(90deg, oklch(0.58 0.14 165 / 0.75), oklch(0.58 0.14 165))",
+              }}
+            >
+              <div
+                className="absolute inset-y-0 w-8 tour-shimmer"
+                style={{ background: "linear-gradient(90deg, transparent, oklch(1 0 0 / 0.55), transparent)" }}
+              />
+            </div>
           </div>
         </div>
 
-        <div className="px-4 pt-3 pb-3 flex gap-3">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-2xl bg-primary/15 text-primary flex items-center justify-center">
+        <div key={i} className="px-4 pt-3 pb-3 flex gap-3 tour-step-in">
+          <div
+            className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-2xl flex items-center justify-center text-white"
+            style={{
+              background: "linear-gradient(150deg, oklch(0.66 0.13 165), oklch(0.5 0.15 165))",
+              boxShadow: "0 6px 14px -6px oklch(0.5 0.15 165 / 0.65)",
+            }}
+          >
             <Icon className="w-5 h-5" />
           </div>
           <div className="min-w-0">
@@ -354,13 +406,17 @@ export function TourGuide() {
             onClick={() => setI((v) => Math.max(0, v - 1))}
             disabled={i === 0}
             aria-label="Previous step"
-            className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full bg-background border border-border flex items-center justify-center transition disabled:opacity-30"
+            className="glass-soft w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full flex items-center justify-center transition disabled:opacity-30"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <button
             onClick={() => (last ? finish() : setI(i + 1))}
-            className="flex-1 min-w-0 h-10 sm:h-11 rounded-full bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 px-3 transition hover:opacity-90"
+            className="flex-1 min-w-0 h-10 sm:h-11 rounded-full text-white text-sm font-medium flex items-center justify-center gap-2 px-3 transition hover:-translate-y-0.5"
+            style={{
+              background: "linear-gradient(150deg, oklch(0.62 0.13 165), oklch(0.48 0.15 165))",
+              boxShadow: "0 10px 22px -8px oklch(0.5 0.15 165 / 0.6)",
+            }}
           >
             <span className="truncate">
               {last ? "Finish tour" : `Next · ${STEPS[i + 1]?.label ?? ""}`}
