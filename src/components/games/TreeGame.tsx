@@ -330,9 +330,9 @@ export function TreeGame({ stage, health }: Props) {
         {/* --- UI WARNINGS --- */}
         {(wilt || isDead) && (
           <g style={(critical || isDead) ? { animation: "warnBlink 0.8s ease-in-out infinite" } : undefined}>
-            <rect x="12" y="12" width="140" height="22" rx="11" fill="#000" opacity="0.6" />
-            <text x="82" y="27" textAnchor="middle" fontSize="11" fill="#ffd9a0" fontWeight="bold">
-              {isDead ? "☠️ TREE HAS DIED" : critical ? "🥀 WILTING BADLY" : "💧 NEEDS WATER"}
+            <rect x="12" y="12" width="150" height="22" rx="11" fill="#000" opacity="0.6" />
+            <text x="87" y="27" textAnchor="middle" fontSize="11" fill="#ffd9a0" fontWeight="bold">
+              {isDead ? "The tree has withered" : critical ? "Wilting heavily" : "Needs a little water"}
             </text>
           </g>
         )}

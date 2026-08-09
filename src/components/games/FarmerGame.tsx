@@ -199,10 +199,9 @@ export function FarmerGame({ fruits, elapsedMs, running }: Props) {
 
         {/* Timer */}
         <g>
-          <rect x="210" y="12" width="98" height="26" rx="13" fill="#000" opacity="0.35" />
-          <text x="259" y="30" textAnchor="middle" fontSize="12" fill="#fff" fontWeight="600">
-            {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
-            {running ? ` · +1 in ${nextFruitIn}s` : " · paused"}
+          <rect x="190" y="12" width="118" height="26" rx="13" fill="#000" opacity="0.35" />
+          <text x="249" y="30" textAnchor="middle" fontSize="12" fill="#fff" fontWeight="600">
+            {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")} {running ? `| Next in ${nextFruitIn}s` : "| Paused"}
           </text>
         </g>
 

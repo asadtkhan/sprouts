@@ -374,7 +374,7 @@ export function TreehouseGame({ stage, health }: Props) {
           <g style={critical ? { animation: "warnBlink 0.8s ease-in-out infinite" } : undefined}>
             <rect x="70" y="12" width="180" height="22" rx="11" fill="#000" opacity="0.6" />
             <text x="160" y="27" textAnchor="middle" fontSize="11" fill="#ffb3a0" fontWeight="bold">
-              {critical ? "⚠ CRITICAL STORM" : "⚠ STORM DAMAGE"}
+              {critical ? "Heavy storm warning" : "Taking storm damage"}
             </text>
           </g>
         )}
