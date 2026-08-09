@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { RACE_LEVELS } from "@/lib/race";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,21 @@ export function CarRace({ meName, meStep, oppName, oppStep, compact }: Props) {
   const viewW = compact ? 220 : 340;
   // keep own car around 38% of the viewport
   const camera = Math.max(0, Math.min(trackW - viewW, meX - viewW * 0.38));
+
+  // Detect when your own car actually advances a lap (not on first mount)
+  // so the car can burn some gas and drive there instead of just appearing
+  // in the new spot.
+  const [boosting, setBoosting] = useState(false);
+  const prevStepRef = useRef(meStep);
+  useEffect(() => {
+    if (meStep > prevStepRef.current) {
+      setBoosting(true);
+      const t = setTimeout(() => setBoosting(false), 900);
+      prevStepRef.current = meStep;
+      return () => clearTimeout(t);
+    }
+    prevStepRef.current = meStep;
+  }, [meStep]);
 
   return (
     <div className={cn("relative w-full overflow-hidden rounded-2xl", compact ? "h-28" : "h-56")}>
@@ -68,7 +84,7 @@ export function CarRace({ meName, meStep, oppName, oppStep, compact }: Props) {
           />
         )}
         {/* your car (near lane) */}
-        <Car x={meX} top="66%" color="#f97362" label={meName} you scale={0.95} />
+        <Car x={meX} top="66%" color="#f97362" label={meName} you scale={0.95} boosting={boosting} />
       </div>
 
       {/* level marker */}
@@ -86,6 +102,7 @@ function Car({
   label,
   you,
   scale = 1,
+  boosting,
 }: {
   x: number;
   top: string;
@@ -93,6 +110,7 @@ function Car({
   label: string;
   you?: boolean;
   scale?: number;
+  boosting?: boolean;
 }) {
   return (
     <div
@@ -113,17 +131,44 @@ function Car({
         >
           {label}
         </span>
-        <svg width="54" height="26" viewBox="0 0 54 26" style={{ animation: "car-bob 1.6s ease-in-out infinite" }}>
-          <ellipse cx="27" cy="23" rx="20" ry="3" fill="#000" opacity="0.18" />
-          <path d="M6 17 L10 10 Q12 7 17 7 L31 7 Q36 7 40 11 L47 14 Q50 15 50 18 L6 18 Z" fill={color} />
-          <path d="M17 8 L29 8 Q33 8 36 11 L20 11 Z" fill="#ffffff" opacity="0.8" />
-          <circle cx="16" cy="19" r="4.5" fill="#22232e" />
-          <circle cx="16" cy="19" r="1.8" fill="#c9ccd8" />
-          <circle cx="40" cy="19" r="4.5" fill="#22232e" />
-          <circle cx="40" cy="19" r="1.8" fill="#c9ccd8" />
-        </svg>
+        <div className="relative">
+          {boosting && (
+            <div className="absolute left-[2px] top-[17px] pointer-events-none">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="absolute rounded-full bg-slate-400/70"
+                  style={{
+                    width: 5,
+                    height: 5,
+                    animation: `exhaust-puff 650ms ease-out ${i * 110}ms both`,
+                  }}
+                />
+              ))}
+            </div>
+          )}
+          <svg
+            width="54"
+            height="26"
+            viewBox="0 0 54 26"
+            style={{
+              animation: boosting
+                ? "car-bob 0.5s ease-in-out infinite"
+                : "car-bob 1.6s ease-in-out infinite",
+            }}
+          >
+            <ellipse cx="27" cy="23" rx="20" ry="3" fill="#000" opacity="0.18" />
+            <path d="M6 17 L10 10 Q12 7 17 7 L31 7 Q36 7 40 11 L47 14 Q50 15 50 18 L6 18 Z" fill={color} />
+            <path d="M17 8 L29 8 Q33 8 36 11 L20 11 Z" fill="#ffffff" opacity="0.8" />
+            <circle cx="16" cy="19" r="4.5" fill="#22232e" />
+            <circle cx="16" cy="19" r="1.8" fill="#c9ccd8" />
+            <circle cx="40" cy="19" r="4.5" fill="#22232e" />
+            <circle cx="40" cy="19" r="1.8" fill="#c9ccd8" />
+          </svg>
+        </div>
       </div>
-      <style>{`@keyframes car-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}`}</style>
+      <style>{`@keyframes car-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
+@keyframes exhaust-puff{0%{transform:translate(0,0) scale(0.6);opacity:0.6}100%{transform:translate(-16px,-9px) scale(1.9);opacity:0}}`}</style>
     </div>
   );
 }
