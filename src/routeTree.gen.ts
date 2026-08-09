@@ -15,6 +15,7 @@ import { Route as FocusRouteImport } from './routes/focus'
 import { Route as JournalRouteImport } from './routes/journal'
 import { Route as PersonalRouteImport } from './routes/personal'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as RaceRouteImport } from './routes/race'
 import { Route as TrackingRouteImport } from './routes/tracking'
 
 const IndexRoute = IndexRouteImport.update({
@@ -47,6 +48,11 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RaceRoute = RaceRouteImport.update({
+  id: '/race',
+  path: '/race',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TrackingRoute = TrackingRouteImport.update({
   id: '/tracking',
   path: '/tracking',
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/journal': typeof JournalRoute
   '/personal': typeof PersonalRoute
   '/profile': typeof ProfileRoute
+  '/race': typeof RaceRoute
   '/tracking': typeof TrackingRoute
 }
 export interface FileRoutesByTo {
@@ -69,6 +76,7 @@ export interface FileRoutesByTo {
   '/journal': typeof JournalRoute
   '/personal': typeof PersonalRoute
   '/profile': typeof ProfileRoute
+  '/race': typeof RaceRoute
   '/tracking': typeof TrackingRoute
 }
 export interface FileRoutesById {
@@ -79,6 +87,7 @@ export interface FileRoutesById {
   '/journal': typeof JournalRoute
   '/personal': typeof PersonalRoute
   '/profile': typeof ProfileRoute
+  '/race': typeof RaceRoute
   '/tracking': typeof TrackingRoute
 }
 export interface FileRouteTypes {
@@ -90,6 +99,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/personal'
     | '/profile'
+    | '/race'
     | '/tracking'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/personal'
     | '/profile'
+    | '/race'
     | '/tracking'
   id:
     | '__root__'
@@ -108,6 +119,7 @@ export interface FileRouteTypes {
     | '/journal'
     | '/personal'
     | '/profile'
+    | '/race'
     | '/tracking'
   fileRoutesById: FileRoutesById
 }
@@ -118,6 +130,7 @@ export interface RootRouteChildren {
   JournalRoute: typeof JournalRoute
   PersonalRoute: typeof PersonalRoute
   ProfileRoute: typeof ProfileRoute
+  RaceRoute: typeof RaceRoute
   TrackingRoute: typeof TrackingRoute
 }
 
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/race': {
+      id: '/race'
+      path: '/race'
+      fullPath: '/race'
+      preLoaderRoute: typeof RaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tracking': {
       id: '/tracking'
       path: '/tracking'
@@ -182,6 +202,7 @@ const rootRouteChildren: RootRouteChildren = {
   JournalRoute: JournalRoute,
   PersonalRoute: PersonalRoute,
   ProfileRoute: ProfileRoute,
+  RaceRoute: RaceRoute,
   TrackingRoute: TrackingRoute,
 }
 export const routeTree = rootRouteImport
