@@ -18,15 +18,17 @@ export function BottomNav() {
 
   return (
     <>
-      {/* Spacer so page content isn't hidden behind the fixed bar */}
-      <div className="h-20" aria-hidden />
+      {/* Spacer so page content isn't hidden behind the floating bar */}
+      <div className="h-24" aria-hidden />
       <nav
         data-tour="nav"
-        className="fixed bottom-0 inset-x-0 z-40 pb-[env(safe-area-inset-bottom)]
-                   bg-white/85 backdrop-blur-xl border-t border-white/60
-                   shadow-[0_-6px_24px_-8px_rgba(60,50,120,0.18)]"
+        className="fixed bottom-0 inset-x-0 z-40 flex justify-center px-4"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 14px)" }}
       >
-        <div className="mx-auto max-w-md flex items-stretch justify-around px-1 py-1.5">
+        <div
+          className="glass-soft flex items-center gap-1 rounded-full p-2"
+          style={{ boxShadow: "var(--glass-shadow)" }}
+        >
           {items.map((it) => {
             const active = pathname === it.to;
             const Icon = it.icon;
@@ -34,15 +36,28 @@ export function BottomNav() {
               <Link
                 key={it.to}
                 to={it.to}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-2xl transition min-w-[58px]",
-                  active
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
+                aria-label={it.label}
+                className="relative flex items-center justify-center w-12 h-12 rounded-full transition active:scale-90"
               >
-                <Icon className={cn("w-5 h-5 transition", active && "scale-110")} />
-                <span className="text-[10px] font-medium">{it.label}</span>
+                {active && (
+                  <span
+                    className="absolute inset-0 rounded-full transition-opacity duration-200"
+                    style={{
+                      background:
+                        "linear-gradient(150deg, oklch(0.58 0.14 165 / 0.22), oklch(0.58 0.14 165 / 0.1))",
+                    }}
+                  />
+                )}
+                <Icon
+                  className={cn(
+                    "relative w-5 h-5 transition-all duration-200",
+                    active ? "text-primary scale-110" : "text-muted-foreground/70",
+                  )}
+                  strokeWidth={active ? 2.4 : 2}
+                />
+                {active && (
+                  <span className="absolute bottom-1.5 w-1 h-1 rounded-full bg-primary" />
+                )}
               </Link>
             );
           })}

@@ -34,7 +34,7 @@ export function FocusCard() {
         <div>
           <div className="font-display text-xl">Focus session</div>
           <div className="text-xs text-muted-foreground">
-            A one-time task — a fruit is plucked every minute you keep going.
+            Just focus, and a fruit is plucked every minute you keep going.
           </div>
         </div>
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -87,7 +87,7 @@ export function FocusCard() {
               <Button
                 onClick={() => {
                   endFocus();
-                  toast.success(`Session ended — you picked ${fruits} fruit${fruits === 1 ? "" : "s"} 🍎`);
+                  toast.success(`Session ended. You picked ${fruits} fruit${fruits === 1 ? "" : "s"} 🍎`);
                 }}
                 className="rounded-xl"
               >

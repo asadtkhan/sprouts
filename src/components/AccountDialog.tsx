@@ -16,7 +16,7 @@ export function AccountDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       return;
     }
     createAccount(email);
-    toast.success("Account created — your progress is safe!");
+    toast.success("Account created. Your progress is safe!");
     onOpenChange(false);
   }
 

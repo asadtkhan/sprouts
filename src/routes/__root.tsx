@@ -81,20 +81,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Sprout — Grow habits, grow a world" },
+      { title: "Sprout · Grow habits, Feel gratified" },
       {
         name: "description",
         content:
           "A cozy daily habit tracker where your habits nurture a tree, a rocket mission, or a kitten.",
       },
-      { property: "og:title", content: "Sprout — Grow habits, grow a world" },
+      { property: "og:title", content: "Sprout · Grow habits, Feel gratified" },
       {
         property: "og:description",
         content: "A cozy daily habit tracker where your habits nurture a tree, a rocket mission, or a kitten.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Sprout — Grow habits, grow a world" },
+      { name: "twitter:title", content: "Sprout · Grow habits, Feel gratified" },
       { name: "twitter:description", content: "A cozy daily habit tracker where your habits nurture a tree, a rocket mission, or a kitten." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9f5f6728-cf86-416e-aab1-f58b3c85688c/id-preview-628f6a5c--a36c1e9a-8114-4dc0-a9ab-5620b7a60690.lovable.app-1783965446028.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9f5f6728-cf86-416e-aab1-f58b3c85688c/id-preview-628f6a5c--a36c1e9a-8114-4dc0-a9ab-5620b7a60690.lovable.app-1783965446028.png" },

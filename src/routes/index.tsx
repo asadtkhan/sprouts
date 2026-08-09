@@ -29,9 +29,9 @@ import { useRace } from "@/lib/race";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Sprout — Grow habits, grow a world" },
+      { title: "Sprout · Grow habits, Feel gratified" },
       { name: "description", content: "A cozy habit tracker where your daily rituals, personal activities, focus sessions and journaling all shape a tiny living world." },
-      { property: "og:title", content: "Sprout — Grow habits, grow a world" },
+      { property: "og:title", content: "Grow habits, Feel gratified" },
       { property: "og:description", content: "A cozy habit tracker where your daily rituals, personal activities, focus sessions and journaling all shape a tiny living world." },
     ],
   }),
@@ -119,7 +119,7 @@ function Hub() {
                 />
               </div>
               {dueToday.length === 0 ? (
-                <div className="text-xs text-muted-foreground">Nothing scheduled today — rest well.</div>
+                <div className="text-xs text-muted-foreground">Nothing scheduled today. Rest well.</div>
               ) : (
                 <div className="space-y-1">
                   {dueToday.map((h) => {
@@ -143,7 +143,7 @@ function Hub() {
           <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
             <span>Tap to open Daily</span>
             <button
-              onClick={(e) => { e.preventDefault(); forceEndDay(); toast.success("Day ended — world updated"); }}
+              onClick={(e) => { e.preventDefault(); forceEndDay(); toast.success("Day ended. Your world updated."); }}
               className="underline hover:text-foreground"
             >
               End day now
@@ -163,8 +163,9 @@ function Hub() {
             <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-0.5 transition" />
           </div>
           {individual.length === 0 ? (
-            <div className="text-sm text-muted-foreground py-3">
-              No personal activities yet — tap to add one.
+            <div className="flex flex-col items-center justify-center gap-1.5 text-center py-6 min-h-[92px]">
+              <Wand2 className="w-5 h-5 text-muted-foreground/60" />
+              <div className="text-sm text-muted-foreground">Nothing here yet. Tap to start your first one.</div>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">

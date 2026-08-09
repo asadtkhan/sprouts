@@ -32,7 +32,7 @@ export function SplashScreen({ children }: { children: ReactNode }) {
         <div
           aria-hidden={!visible}
           role="img"
-          aria-label="Sprout — gamified habit building and growth"
+          aria-label="Sprout, a gamified habit building and growth app"
           className={`fixed inset-0 z-[100] flex items-center justify-center overflow-hidden transition-opacity ease-out ${
             visible ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
@@ -161,7 +161,7 @@ export function SplashScreen({ children }: { children: ReactNode }) {
               className="mt-2 text-center text-sm text-[#3b3161]/70 sm:text-base"
               style={{ opacity: 0, animation: "splashRise .7s ease-out 1.8s forwards" }}
             >
-              Grow habits, grow a world
+              Grow habits, Feel gratified
             </p>
           </div>
         </div>

@@ -42,7 +42,7 @@ const STEPS: Step[] = [
     icon: Sparkles,
     label: "Welcome",
     title: "Welcome to Sprout",
-    body: "Every ritual you keep grows a tiny living world. I'll point at each part of the app — use the arrows to move along.",
+    body: "Every ritual you keep grows a tiny living world. I'll show you around, just follow the arrows.",
   },
   {
     route: "/",
@@ -50,7 +50,7 @@ const STEPS: Step[] = [
     icon: ListChecks,
     label: "Daily",
     title: "Daily rituals card",
-    body: "Your scheduled habits live here, with today's completion and a peek at your world. Tap it to open the full Daily screen.",
+    body: "Your scheduled habits live here, along with today's progress and a peek at your world. Tap the card to open the full Daily screen.",
   },
   {
     route: "/",
@@ -58,7 +58,7 @@ const STEPS: Step[] = [
     icon: Wand2,
     label: "Personal",
     title: "Personal activities",
-    body: "Free-form things you do at your own pace. Log one with the +1 button — each activity grows its own little world.",
+    body: "Things you do in your own time, not on a schedule. Log one with the plus button, and each activity grows its own little world.",
   },
   {
     route: "/",
@@ -66,7 +66,7 @@ const STEPS: Step[] = [
     icon: Flag,
     label: "Race",
     title: "Race a friend",
-    body: "Pick one activity to share with a friend, swap a race code, and every day you both keep it your cars drive a lap closer to the finish line.",
+    body: "Pick one activity to share with a friend, then swap race codes. Every day you both keep it, your cars drive a lap closer to the finish line.",
   },
 
   {
@@ -75,7 +75,7 @@ const STEPS: Step[] = [
     icon: ListChecks,
     label: "Rituals",
     title: "Everything in one card",
-    body: "Your world, your streak, today's completion bar and every ritual for the day. Mark each one completed or missed — the world updates at 11 PM.",
+    body: "Your world, your streak, today's progress bar, and every ritual for the day, all in one place. Mark each one done or missed, and your world updates at 11 PM.",
   },
   {
     route: "/personal",
@@ -83,15 +83,15 @@ const STEPS: Step[] = [
     icon: Wand2,
     label: "Activities",
     title: "Your ongoing activities",
-    body: "Each card has its own game and history. Tap \"I did it\" to take a step — there are no penalties for slow days here.",
+    body: "Each card has its own game and its own history. Tap \"I did it\" to take a step forward. There's no penalty for a slow day.",
   },
   {
     route: "/focus",
     target: "focus-setup",
     icon: Timer,
     label: "Session",
-    title: "Open-ended or planned",
-    body: "Reach this any time from the Focus tab. Run a session with no end time, or plan work and rest intervals before you begin.",
+    title: "However you like to focus",
+    body: "Find this anytime from the Focus tab. Run a session with no end time, or plan work and rest intervals before you begin.",
   },
   {
     route: "/journal",
@@ -107,7 +107,7 @@ const STEPS: Step[] = [
     icon: LineChart,
     label: "Tracking",
     title: "Your month at a glance",
-    body: "A calendar of daily completion, your most-performed activities each week, and focus minutes over the last 15 days.",
+    body: "A calendar of daily completion, your most frequent activities each week, and focus minutes over the last 15 days.",
   },
   {
     route: "/tracking",
@@ -115,7 +115,7 @@ const STEPS: Step[] = [
     icon: Compass,
     label: "Navigate",
     title: "Move around from here",
-    body: "This bar is always with you: Home, Focus, Journal, Tracking and Profile. Daily rituals, personal activities and the friend race live on the Home screen. Replay this tour any time from Profile.",
+    body: "This bar is always with you: Home, Focus, Journal, Tracking and Profile. Daily rituals, personal activities and the friend race all live on the Home screen. Replay this tour anytime from Profile.",
   },
 
 ];

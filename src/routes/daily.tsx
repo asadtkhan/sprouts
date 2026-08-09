@@ -23,9 +23,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/daily")({
   head: () => ({
     meta: [
-      { title: "Daily rituals — Sprout" },
+      { title: "Daily rituals · Sprout" },
       { name: "description", content: "Your daily rituals that grow the main world." },
-      { property: "og:title", content: "Daily rituals — Sprout" },
+      { property: "og:title", content: "Daily rituals · Sprout" },
       { property: "og:description", content: "Your daily rituals that grow the main world." },
     ],
   }),
@@ -106,7 +106,7 @@ function DailyPage() {
           </div>
           {unmarked > 0 && (
             <div className="text-[11px] text-muted-foreground mb-2">
-              {unmarked} still unmarked — anything left blank by midnight won't move your world either way.
+              {unmarked} still unmarked. Anything left blank by midnight won't move your world either way.
             </div>
           )}
           <div className="flex items-end justify-between mb-2">

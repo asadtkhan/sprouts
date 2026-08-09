@@ -709,7 +709,7 @@ export function runSmartNotifications(now = new Date()) {
   }
   if (hour >= 20 && hour < 23 && s.notif.evening !== iso && due > 0 && pct < 80) {
     const remaining = due - done;
-    notify("Before the 11 PM tally ⏳", `${remaining} ritual${remaining === 1 ? "" : "s"} left — finish strong for your world.`);
+    notify("Before the 11 PM tally ⏳", `${remaining} ritual${remaining === 1 ? "" : "s"} left. Finish strong for your world.`);
     setState((prev) => ({ ...prev, notif: { ...prev.notif, evening: iso } }));
   }
 
@@ -725,7 +725,7 @@ export function runSmartNotifications(now = new Date()) {
       "The world updates at midnight 🌙",
       unmarked > 0
         ? `${unmarked} ritual${unmarked === 1 ? "" : "s"} still unmarked. Anything you leave blank won't count either way.`
-        : "Everything's marked — your world is about to grow.",
+        : "Everything's marked. Your world is about to grow.",
     );
     setState((prev) => ({ ...prev, notif: { ...prev.notif, nightly: iso } }));
   }
@@ -739,7 +739,7 @@ export function runSmartNotifications(now = new Date()) {
     const target = hh * 60 + mm;
     if (mins < target || mins > target + 30) continue;
     if (state.notif.reminders?.[h.id] === iso) continue;
-    notify(`${h.emoji} ${h.name}`, "Time for this ritual — your world is watching.");
+    notify(`${h.emoji} ${h.name}`, "Time for this ritual. Your world is waiting.");
     setState((prev) => ({
       ...prev,
       notif: { ...prev.notif, reminders: { ...(prev.notif.reminders ?? {}), [h.id]: iso } },

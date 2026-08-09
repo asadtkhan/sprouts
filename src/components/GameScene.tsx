@@ -62,21 +62,21 @@ export function GameScene({ kind, stage, health, pct }: Props) {
 function getBanner(kind: GameKind, pct: number, health: number): string | null {
   if (pct >= 80) {
     if (kind === "tree") return "🌸 Your plant feels greener today!";
-    if (kind === "space") return "🚀 Boosters engaged — planet in sight!";
+    if (kind === "space") return "🚀 Boosters engaged, planet in sight!";
     if (kind === "cat") return "🐾 Kitty is purring happily!";
-    return "🔨 Another plank in place — looking cozy!";
+    return "🔨 Another plank in place, looking cozy!";
   }
   if (pct >= 51) {
-    if (kind === "tree") return "🌿 Do better for a healthier plant";
-    if (kind === "space") return "⏳ Push harder or you'll be late to the planet";
-    if (kind === "cat") return "🥣 Kitty needs a little more love";
-    return "🪵 Keep at it — the treehouse needs more wood";
+    if (kind === "tree") return "🌿 A little more today and your plant will thrive";
+    if (kind === "space") return "⏳ Keep going and you'll reach the planet in time";
+    if (kind === "cat") return "🥣 Kitty could use a little more love";
+    return "🪵 Keep at it, the treehouse could use more wood";
   }
   if (health < 50) {
     if (kind === "tree") return "🥀 Your plant is wilting…";
-    if (kind === "space") return "⛽ Low fuel — the mission is at risk";
-    if (kind === "cat") return "🤒 Kitty is feeling sick…";
-    return "⛈️ A storm is damaging the treehouse…";
+    if (kind === "space") return "⛽ Fuel is running low for the mission";
+    if (kind === "cat") return "🤒 Kitty is feeling under the weather…";
+    return "⛈️ A storm is wearing down the treehouse…";
   }
   return null;
 }

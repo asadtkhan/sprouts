@@ -8,9 +8,9 @@ import { JournalCat } from "@/components/JournalCat";
 export const Route = createFileRoute("/journal")({
   head: () => ({
     meta: [
-      { title: "Journal — Sprout" },
+      { title: "Journal · Sprout" },
       { name: "description", content: "Write about your day. A little kitten keeps you company." },
-      { property: "og:title", content: "Journal — Sprout" },
+      { property: "og:title", content: "Journal · Sprout" },
       { property: "og:description", content: "Write about your day. A little kitten keeps you company." },
     ],
   }),
@@ -29,7 +29,7 @@ function JournalPage() {
         <div className="text-xs uppercase tracking-widest text-muted-foreground">Today</div>
         <h1 className="font-display text-3xl md:text-4xl">Journal</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Write about your day — no game, just a moment to reflect.
+          Write about your day, no game here, just a moment to reflect.
         </p>
       </div>
 
@@ -57,7 +57,7 @@ function JournalPage() {
       <div className="space-y-2">
         {s.journalEntries.length === 0 && (
           <div className="glass rounded-2xl p-6 text-center text-sm text-muted-foreground">
-            Your journal is empty. Write something short — even one line counts.
+            Your journal is empty. Write something short, even one line counts.
           </div>
         )}
         {s.journalEntries.map((e) => (

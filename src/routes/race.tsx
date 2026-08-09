@@ -19,9 +19,9 @@ import {
 export const Route = createFileRoute("/race")({
   head: () => ({
     meta: [
-      { title: "Friend race — Sprout" },
+      { title: "Friend race · Sprout" },
       { name: "description", content: "Race a friend car-by-car: every day you both keep your shared activity, your cars move one lap closer to the finish line." },
-      { property: "og:title", content: "Friend race — Sprout" },
+      { property: "og:title", content: "Friend race · Sprout" },
       { property: "og:description", content: "Race a friend car-by-car: every day you both keep your shared activity, your cars move one lap closer to the finish line." },
     ],
   }),
@@ -65,7 +65,7 @@ function RaceSetup({ onDone }: { onDone: () => void }) {
     setBusy(true);
     try {
       const c = await createRace(activity.trim(), name.trim());
-      toast.success(`Race created — share code ${c}`);
+      toast.success(`Race created. Share code ${c}`);
       onDone();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create the race");
@@ -95,7 +95,7 @@ function RaceSetup({ onDone }: { onDone: () => void }) {
         <p className="mt-3 text-sm text-muted-foreground">
           Pick one activity to share with a friend. Every day you keep it, your car drives one lap
           forward. Miss it and your car idles while theirs pulls ahead. First to {RACE_LEVELS} laps
-          crosses the finish line — you can both make it, or both stall.
+          crosses the finish line. You can both make it, or you can both stall.
         </p>
       </div>
 
@@ -109,7 +109,7 @@ function RaceSetup({ onDone }: { onDone: () => void }) {
         <Input
           value={activity}
           onChange={(e) => setActivity(e.target.value)}
-          placeholder="Shared activity — e.g. Morning run"
+          placeholder="Shared activity (e.g. Morning run)"
           maxLength={80}
         />
         <Button disabled={busy} onClick={handleCreate} className="w-full rounded-full">
@@ -122,7 +122,7 @@ function RaceSetup({ onDone }: { onDone: () => void }) {
         <Input
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
-          placeholder="Race code — e.g. K7QM2P"
+          placeholder="Race code (e.g. K7QM2P)"
           maxLength={12}
         />
         <Button disabled={busy} variant="secondary" onClick={handleJoin} className="w-full rounded-full">
@@ -150,13 +150,13 @@ function RaceBoard({
 
   async function did() {
     const r = await advanceMyCar(race.id, me);
-    if (!r.ok) toast("You already raced today — come back tomorrow");
+    if (!r.ok) toast("You already raced today. Come back tomorrow");
     else toast.success("Vroom! Your car moved a lap ahead");
     refresh();
   }
   async function missed() {
     await skipToday(race.id, me);
-    toast("No lap today — your car idles");
+    toast("No lap today. Your car idles");
     refresh();
   }
 
@@ -203,7 +203,7 @@ function RaceBoard({
           <div className="mt-3 glass-soft rounded-2xl p-3 flex items-center gap-2 text-sm">
             <Trophy className="w-4 h-4 text-amber-500" />
             {meDone && oppDone
-              ? "You both crossed the finish line — what a race!"
+              ? "You both crossed the finish line. What a race!"
               : meDone
                 ? "You crossed the finish line first. Winner!"
                 : `${opponent?.name} crossed the finish line first.`}
@@ -222,7 +222,7 @@ function RaceBoard({
         )}
         {marked && (
           <div className="mt-2 text-xs text-muted-foreground text-center">
-            Today is locked in — your car moves again tomorrow.
+            Today is locked in. Your car moves again tomorrow.
           </div>
         )}
       </div>
