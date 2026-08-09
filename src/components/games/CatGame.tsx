@@ -1,8 +1,11 @@
-// Cat game — 31 stages from kitten to full-grown cat. Growth is shown
-// through genuinely different proportions at each tier (not just a uniform
-// scale-up of one adult shape), and poor health makes the cat visibly
-// droop and regress toward how it looked a stage ago — a real "negative
-// progress" look — without ever losing the size it's actually earned.
+// Cat game — 31 stages from kitten to full-grown cat. Every stage keeps
+// the features that actually read as "cat" (triangle ears, a curled tail,
+// whiskers, open eyes) — only their proportions change, from a round,
+// big-eyed kitten to a sleek adult. Poor health droops those same features
+// and dulls the fur rather than hiding them, so it always still looks like
+// a cat, just an unhappy one — and blends proportions partway back toward
+// the previous stage as a genuine "negative progress" cue, without ever
+// erasing the size it's actually earned.
 import { useState } from "react";
 import { GameDefs, Pedestal, Sparkles, FX_KEYFRAMES, Burst, useBurstOnIncrease } from "./fx";
 
@@ -13,7 +16,6 @@ interface Props {
 }
 
 type Accessory = "none" | "collar" | "bow" | "hat";
-type Posture = "curled" | "sit" | "tall";
 type Condition = "normal" | "sick" | "critical";
 
 interface CatTier {
@@ -24,199 +26,34 @@ interface CatTier {
   headRX: number;
   headRY: number;
   earLen: number;
-  eyeRX: number;
-  eyeRY: number;
+  eyeR: number;
   tailLen: number;
-  whiskers: boolean;
+  whiskerLen: number;
   furTuft: boolean;
   accessory: Accessory;
-  posture: Posture;
   squint: boolean;
-  earFold: boolean;
-  eyesClosed: boolean;
 }
 
-// Nine hand-tuned growth stages: a newborn's oversized head, huge eyes,
-// folded ears and stub tail gradually resolve into a full-grown cat with
-// balanced proportions, a long plush tail, whiskers and accessories.
+// Nine hand-tuned growth stages. Head:body ratio, eye size, ear length,
+// tail length and whisker length all shrink or grow smoothly from a round
+// kitten toward a balanced adult; fur tufts, a collar, a bow and finally a
+// party hat unlock along the way.
 const CAT_TIERS: CatTier[] = [
-  {
-    label: "Newborn",
-    scale: 0.44,
-    bodyRX: 32,
-    bodyRY: 26,
-    headRX: 40,
-    headRY: 36,
-    earLen: 10,
-    eyeRX: 7.5,
-    eyeRY: 8.5,
-    tailLen: 6,
-    whiskers: false,
-    furTuft: false,
-    accessory: "none",
-    posture: "curled",
-    squint: false,
-    earFold: true,
-    eyesClosed: true,
-  },
-  {
-    label: "Baby",
-    scale: 0.54,
-    bodyRX: 38,
-    bodyRY: 30,
-    headRX: 43,
-    headRY: 38,
-    earLen: 16,
-    eyeRX: 8.0,
-    eyeRY: 8.5,
-    tailLen: 16,
-    whiskers: false,
-    furTuft: false,
-    accessory: "none",
-    posture: "sit",
-    squint: false,
-    earFold: false,
-    eyesClosed: false,
-  },
-  {
-    label: "Toddler",
-    scale: 0.63,
-    bodyRX: 43,
-    bodyRY: 33,
-    headRX: 45,
-    headRY: 40,
-    earLen: 22,
-    eyeRX: 7.2,
-    eyeRY: 8.0,
-    tailLen: 28,
-    whiskers: true,
-    furTuft: false,
-    accessory: "none",
-    posture: "sit",
-    squint: false,
-    earFold: false,
-    eyesClosed: false,
-  },
-  {
-    label: "Young cat",
-    scale: 0.72,
-    bodyRX: 48,
-    bodyRY: 36,
-    headRX: 47,
-    headRY: 42,
-    earLen: 26,
-    eyeRX: 6.4,
-    eyeRY: 7.3,
-    tailLen: 40,
-    whiskers: true,
-    furTuft: false,
-    accessory: "none",
-    posture: "sit",
-    squint: false,
-    earFold: false,
-    eyesClosed: false,
-  },
-  {
-    label: "Adolescent",
-    scale: 0.81,
-    bodyRX: 52,
-    bodyRY: 39,
-    headRX: 48,
-    headRY: 43,
-    earLen: 29,
-    eyeRX: 5.8,
-    eyeRY: 6.8,
-    tailLen: 50,
-    whiskers: true,
-    furTuft: true,
-    accessory: "none",
-    posture: "sit",
-    squint: false,
-    earFold: false,
-    eyesClosed: false,
-  },
-  {
-    label: "Junior",
-    scale: 0.9,
-    bodyRX: 55,
-    bodyRY: 42,
-    headRX: 49,
-    headRY: 44,
-    earLen: 31,
-    eyeRX: 5.2,
-    eyeRY: 6.3,
-    tailLen: 58,
-    whiskers: true,
-    furTuft: true,
-    accessory: "collar",
-    posture: "tall",
-    squint: false,
-    earFold: false,
-    eyesClosed: false,
-  },
-  {
-    label: "Adult",
-    scale: 0.98,
-    bodyRX: 58,
-    bodyRY: 45,
-    headRX: 51,
-    headRY: 45,
-    earLen: 33,
-    eyeRX: 5.0,
-    eyeRY: 6.0,
-    tailLen: 64,
-    whiskers: true,
-    furTuft: true,
-    accessory: "collar",
-    posture: "tall",
-    squint: true,
-    earFold: false,
-    eyesClosed: false,
-  },
-  {
-    label: "Mature",
-    scale: 1.05,
-    bodyRX: 61,
-    bodyRY: 47,
-    headRX: 52,
-    headRY: 46,
-    earLen: 34,
-    eyeRX: 4.8,
-    eyeRY: 5.8,
-    tailLen: 70,
-    whiskers: true,
-    furTuft: true,
-    accessory: "bow",
-    posture: "tall",
-    squint: true,
-    earFold: false,
-    eyesClosed: false,
-  },
-  {
-    label: "Grown",
-    scale: 1.12,
-    bodyRX: 64,
-    bodyRY: 49,
-    headRX: 54,
-    headRY: 47,
-    earLen: 35,
-    eyeRX: 4.6,
-    eyeRY: 5.6,
-    tailLen: 76,
-    whiskers: true,
-    furTuft: true,
-    accessory: "hat",
-    posture: "tall",
-    squint: true,
-    earFold: false,
-    eyesClosed: false,
-  },
+  { label: "Newborn", scale: 0.5, bodyRX: 34, bodyRY: 27, headRX: 38, headRY: 35, earLen: 14, eyeR: 8.5, tailLen: 14, whiskerLen: 10, furTuft: false, accessory: "none", squint: false },
+  { label: "Baby", scale: 0.6, bodyRX: 39, bodyRY: 31, headRX: 41, headRY: 37, earLen: 18, eyeR: 8.2, tailLen: 22, whiskerLen: 13, furTuft: false, accessory: "none", squint: false },
+  { label: "Toddler", scale: 0.69, bodyRX: 44, bodyRY: 34, headRX: 44, headRY: 39, earLen: 22, eyeR: 7.6, tailLen: 32, whiskerLen: 16, furTuft: false, accessory: "none", squint: false },
+  { label: "Young cat", scale: 0.78, bodyRX: 48, bodyRY: 37, headRX: 46, headRY: 41, earLen: 26, eyeR: 6.9, tailLen: 42, whiskerLen: 19, furTuft: false, accessory: "none", squint: false },
+  { label: "Adolescent", scale: 0.87, bodyRX: 52, bodyRY: 40, headRX: 48, headRY: 43, earLen: 29, eyeR: 6.2, tailLen: 52, whiskerLen: 22, furTuft: true, accessory: "none", squint: false },
+  { label: "Junior", scale: 0.94, bodyRX: 55, bodyRY: 43, headRX: 49, headRY: 44, earLen: 31, eyeR: 5.6, tailLen: 58, whiskerLen: 24, furTuft: true, accessory: "collar", squint: false },
+  { label: "Adult", scale: 1.0, bodyRX: 60, bodyRY: 46, headRX: 52, headRY: 46, earLen: 33, eyeR: 5.0, tailLen: 64, whiskerLen: 26, furTuft: true, accessory: "collar", squint: true },
+  { label: "Mature", scale: 1.06, bodyRX: 62, bodyRY: 48, headRX: 53, headRY: 47, earLen: 34, eyeR: 4.8, tailLen: 70, whiskerLen: 27, furTuft: true, accessory: "bow", squint: true },
+  { label: "Grown", scale: 1.12, bodyRX: 64, bodyRY: 49, headRX: 54, headRY: 47, earLen: 35, eyeR: 4.6, tailLen: 76, whiskerLen: 28, furTuft: true, accessory: "hat", squint: true },
 ];
 
-const FUR: Record<Condition, { a: string; b: string; cheek: string }> = {
-  normal: { a: "#f4c186", b: "#d99a52", cheek: "#ffb3b3" },
-  sick: { a: "#c9b199", b: "#a89680", cheek: "#e0a89a" },
-  critical: { a: "#ab9a89", b: "#8a7a6a", cheek: "#c79f96" },
+const FUR: Record<Condition, { a: string; b: string; cheek: string; outline: string }> = {
+  normal: { a: "#f6c78e", b: "#dd9c53", cheek: "#ffb3b3", outline: "#c9863f" },
+  sick: { a: "#c9b199", b: "#a89680", cheek: "#e0a89a", outline: "#94816a" },
+  critical: { a: "#ab9a89", b: "#8a7a6a", cheek: "#c79f96", outline: "#7a6a5a" },
 };
 
 // How far each condition pulls the cat's proportions back toward the
@@ -225,10 +62,10 @@ const REGRESSION: Record<Condition, number> = { normal: 0, sick: 0.28, critical:
 
 /**
  * Blends a tier's proportions toward the previous tier's by `regression`.
- * This is how neglect reads on screen: the cat doesn't lose its earned
- * size outright, but it visibly droops back toward how it looked a stage
- * ago, sheds its whiskers/fur fluff/accessory, and curls up small once
- * things get bad enough — then un-droops the moment health recovers.
+ * This is how neglect reads on screen: the cat keeps its earned size and
+ * shape language (it never stops looking like a cat), but visibly droops
+ * back toward how it looked a stage ago and loses its fur fluff/accessory
+ * — then un-droops the moment health recovers.
  */
 function blendTier(tierIndex: number, regression: number): CatTier {
   const cur = CAT_TIERS[tierIndex];
@@ -242,14 +79,11 @@ function blendTier(tierIndex: number, regression: number): CatTier {
     headRX: lerp(cur.headRX, prev.headRX),
     headRY: lerp(cur.headRY, prev.headRY),
     earLen: lerp(cur.earLen, prev.earLen),
-    eyeRX: lerp(cur.eyeRX, prev.eyeRX),
-    eyeRY: lerp(cur.eyeRY, prev.eyeRY),
+    eyeR: lerp(cur.eyeR, prev.eyeR),
     tailLen: lerp(cur.tailLen, prev.tailLen),
-    whiskers: cur.whiskers && regression < 0.45,
+    whiskerLen: lerp(cur.whiskerLen, prev.whiskerLen),
     furTuft: cur.furTuft && regression < 0.45,
     accessory: regression < 0.3 ? cur.accessory : "none",
-    posture: regression > 0.55 ? "curled" : cur.posture,
-    earFold: cur.earFold || regression > 0.5,
     squint: cur.squint && regression < 0.4,
   };
 }
@@ -266,8 +100,11 @@ export function CatGame({ stage, health }: Props) {
   const fur = FUR[condition];
 
   const bodyCX = 160;
-  const bodyCY = 220;
-  const overlap = Math.min(tier.bodyRY, tier.headRY) * 0.42;
+  const bodyCY = 224;
+  // Head sits mostly above the body with only a small overlap, so the
+  // silhouette reads as two clearly stacked forms — a sitting cat, not
+  // one fused blob.
+  const overlap = Math.min(tier.bodyRY, tier.headRY) * 0.22;
   const headCX = 160;
   const headCY = bodyCY - tier.bodyRY - tier.headRY + overlap;
 
@@ -275,39 +112,40 @@ export function CatGame({ stage, health }: Props) {
   const [poke, setPoke] = useState(0);
   const react = () => setPoke((p) => p + 1);
 
-  // Tail: curls up happily when well, droops down when unwell, tucked
-  // away entirely once the cat is curled up small.
-  const tailBaseX = bodyCX + tier.bodyRX * 0.85;
-  const tailBaseY = bodyCY + tier.bodyRY * 0.1;
-  const tailWidth = Math.max(6, 8 + capped * 0.8);
-  let tailPath: string | null = null;
-  let tailTipX = tailBaseX;
-  let tailTipY = tailBaseY;
-  if (tier.tailLen > 4 && tier.posture !== "curled") {
-    if (condition === "normal") {
-      tailTipX = tailBaseX + tier.tailLen * 0.7;
-      tailTipY = tailBaseY - tier.tailLen;
-      tailPath = `M${tailBaseX} ${tailBaseY} Q${tailBaseX + tier.tailLen * 0.55} ${tailBaseY - tier.tailLen * 0.6} ${tailTipX} ${tailTipY}`;
-    } else {
-      const droop = critical ? 1 : 0.55;
-      tailTipX = tailBaseX + tier.tailLen * 0.55 * droop;
-      tailTipY = tailBaseY + tier.tailLen * 0.55 * droop;
-      tailPath = `M${tailBaseX} ${tailBaseY} Q${tailBaseX + tier.tailLen * 0.3} ${tailBaseY + tier.tailLen * 0.15} ${tailTipX} ${tailTipY}`;
-    }
+  // Tail: always visible. Curls up happily when well, droops down when
+  // unwell — never fully hidden, since a tail is one of the strongest
+  // "this is a cat" cues.
+  const tailBaseX = bodyCX + tier.bodyRX * 0.82;
+  const tailBaseY = bodyCY + tier.bodyRY * 0.35;
+  const tailWidth = Math.max(7, 7 + capped * 0.9);
+  let tailTipX: number;
+  let tailTipY: number;
+  let tailPath: string;
+  if (condition === "normal") {
+    tailTipX = tailBaseX + tier.tailLen * 0.75;
+    tailTipY = tailBaseY - tier.tailLen * 0.95;
+    tailPath = `M${tailBaseX} ${tailBaseY} Q${tailBaseX + tier.tailLen * 0.6} ${tailBaseY - tier.tailLen * 0.55} ${tailTipX} ${tailTipY}`;
+  } else {
+    const droop = critical ? 1 : 0.6;
+    tailTipX = tailBaseX + tier.tailLen * 0.55 * droop;
+    tailTipY = tailBaseY + tier.tailLen * 0.5 * droop;
+    tailPath = `M${tailBaseX} ${tailBaseY} Q${tailBaseX + tier.tailLen * 0.35} ${tailBaseY + tier.tailLen * 0.1} ${tailTipX} ${tailTipY}`;
   }
 
-  const earBaseW = Math.max(8, tier.earLen * 0.85);
-  const earDroop = critical ? 12 : sick ? 5 : 0;
-  const earLX = headCX - tier.headRX * 0.58;
-  const earLY = headCY - tier.headRY * 0.68;
-  const earRX = headCX + tier.headRX * 0.58;
+  const earDroop = critical ? 10 : sick ? 4 : 0;
+  const earBaseHalf = Math.max(9, tier.earLen * 0.62);
+  const earLX = headCX - tier.headRX * 0.66;
+  const earLY = headCY - tier.headRY * 0.62;
+  const earRX = headCX + tier.headRX * 0.66;
+
+  const eyeDX = tier.headRX * 0.36;
 
   const mouthPath =
     condition === "critical"
-      ? `M${headCX - 8} ${headCY + tier.headRY * 0.42} Q${headCX} ${headCY + tier.headRY * 0.34} ${headCX + 8} ${headCY + tier.headRY * 0.42}`
+      ? `M${headCX - 8} ${headCY + tier.headRY * 0.44} Q${headCX} ${headCY + tier.headRY * 0.36} ${headCX + 8} ${headCY + tier.headRY * 0.44}`
       : condition === "sick"
-        ? `M${headCX - 10} ${headCY + tier.headRY * 0.4} Q${headCX} ${headCY + tier.headRY * 0.32} ${headCX + 10} ${headCY + tier.headRY * 0.4}`
-        : `M${headCX - 8} ${headCY + tier.headRY * 0.42} Q${headCX} ${headCY + tier.headRY * 0.52} ${headCX + 8} ${headCY + tier.headRY * 0.42}`;
+        ? `M${headCX - 9} ${headCY + tier.headRY * 0.42} Q${headCX} ${headCY + tier.headRY * 0.34} ${headCX + 9} ${headCY + tier.headRY * 0.42}`
+        : `M${headCX - 8} ${headCY + tier.headRY * 0.42} Q${headCX} ${headCY + tier.headRY * 0.54} ${headCX + 8} ${headCY + tier.headRY * 0.42}`;
 
   return (
     <div
@@ -375,31 +213,54 @@ export function CatGame({ stage, health }: Props) {
               transform={`translate(${bodyCX} ${bodyCY}) scale(${tier.scale}) translate(-${bodyCX} -${bodyCY})`}
             >
               {/* tail, drawn behind the body */}
-              {tailPath && (
-                <g
-                  style={
-                    condition === "normal"
-                      ? {
-                          animation: `${poke ? "catTailHappy 0.6s" : "catTail 2.4s"} ease-in-out infinite`,
-                          transformOrigin: `${tailBaseX}px ${tailBaseY}px`,
-                        }
-                      : undefined
-                  }
-                >
-                  <path
-                    d={tailPath}
-                    stroke={fur.a}
-                    strokeWidth={tailWidth}
-                    fill="none"
-                    strokeLinecap="round"
-                  />
-                  {capped >= 6 && condition === "normal" && (
-                    <circle cx={tailTipX} cy={tailTipY} r={tailWidth * 0.55} fill={fur.a} />
-                  )}
-                </g>
-              )}
+              <g
+                style={
+                  condition === "normal"
+                    ? {
+                        animation: `${poke ? "catTailHappy 0.6s" : "catTail 2.4s"} ease-in-out infinite`,
+                        transformOrigin: `${tailBaseX}px ${tailBaseY}px`,
+                      }
+                    : undefined
+                }
+              >
+                <path
+                  d={tailPath}
+                  stroke={fur.a}
+                  strokeWidth={tailWidth}
+                  fill="none"
+                  strokeLinecap="round"
+                />
+                {capped >= 5 && condition === "normal" && (
+                  <circle cx={tailTipX} cy={tailTipY} r={tailWidth * 0.5} fill={fur.a} />
+                )}
+              </g>
 
-              <ellipse cx={bodyCX} cy={bodyCY} rx={tier.bodyRX} ry={tier.bodyRY} fill={fur.a} />
+              {/* haunches — a soft double bump gives the sitting silhouette weight */}
+              <ellipse
+                cx={bodyCX - tier.bodyRX * 0.72}
+                cy={bodyCY + tier.bodyRY * 0.55}
+                rx={tier.bodyRX * 0.3}
+                ry={tier.bodyRY * 0.4}
+                fill={fur.a}
+              />
+              <ellipse
+                cx={bodyCX + tier.bodyRX * 0.72}
+                cy={bodyCY + tier.bodyRY * 0.55}
+                rx={tier.bodyRX * 0.3}
+                ry={tier.bodyRY * 0.4}
+                fill={fur.a}
+              />
+
+              <ellipse
+                cx={bodyCX}
+                cy={bodyCY}
+                rx={tier.bodyRX}
+                ry={tier.bodyRY}
+                fill={fur.a}
+                stroke={fur.outline}
+                strokeWidth="1.5"
+                strokeOpacity="0.35"
+              />
 
               {/* fur patches — the matted, uncared-for look at critical health */}
               {critical && (
@@ -423,25 +284,21 @@ export function CatGame({ stage, health }: Props) {
                 </>
               )}
 
-              {/* tiny paws — hidden once curled up small */}
-              {tier.posture !== "curled" && (
-                <>
-                  <ellipse
-                    cx={bodyCX - tier.bodyRX * 0.5}
-                    cy={bodyCY + tier.bodyRY * 0.78}
-                    rx={Math.max(6, tier.bodyRX * 0.2)}
-                    ry={Math.max(6, tier.bodyRX * 0.2) * 0.8}
-                    fill={fur.b}
-                  />
-                  <ellipse
-                    cx={bodyCX + tier.bodyRX * 0.5}
-                    cy={bodyCY + tier.bodyRY * 0.78}
-                    rx={Math.max(6, tier.bodyRX * 0.2)}
-                    ry={Math.max(6, tier.bodyRX * 0.2) * 0.8}
-                    fill={fur.b}
-                  />
-                </>
-              )}
+              {/* front paws — always visible */}
+              <ellipse
+                cx={bodyCX - tier.bodyRX * 0.42}
+                cy={bodyCY + tier.bodyRY * 0.82}
+                rx={Math.max(6.5, tier.bodyRX * 0.19)}
+                ry={Math.max(6.5, tier.bodyRX * 0.19) * 0.75}
+                fill={fur.b}
+              />
+              <ellipse
+                cx={bodyCX + tier.bodyRX * 0.42}
+                cy={bodyCY + tier.bodyRY * 0.82}
+                rx={Math.max(6.5, tier.bodyRX * 0.19)}
+                ry={Math.max(6.5, tier.bodyRX * 0.19) * 0.75}
+                fill={fur.b}
+              />
 
               {/* head tilt — a cheerful sway when well, a low slump when critical */}
               <g
@@ -450,102 +307,87 @@ export function CatGame({ stage, health }: Props) {
                   transformOrigin: `${headCX}px ${headCY}px`,
                 }}
               >
-                {tier.earFold ? (
-                  <>
-                    <path
-                      d={`M${headCX - tier.headRX * 0.62} ${headCY - tier.headRY * 0.72} q-6 -2 -8 4 q3 5 9 3 Z`}
-                      fill={fur.a}
-                    />
-                    <path
-                      d={`M${headCX + tier.headRX * 0.62} ${headCY - tier.headRY * 0.72} q6 -2 8 4 q-3 5 -9 3 Z`}
-                      fill={fur.a}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <path
-                      d={`M${earLX} ${earLY} L${earLX - earBaseW * 0.35} ${earLY - tier.earLen + earDroop} L${earLX + earBaseW * 0.55} ${earLY - tier.earLen * 0.35 + earDroop * 0.5} Z`}
-                      fill={fur.a}
-                    />
-                    <path
-                      d={`M${earRX} ${earLY} L${earRX + earBaseW * 0.35} ${earLY - tier.earLen + earDroop} L${earRX - earBaseW * 0.55} ${earLY - tier.earLen * 0.35 + earDroop * 0.5} Z`}
-                      fill={fur.a}
-                    />
-                    <path
-                      d={`M${earLX - 3} ${earLY - 4} L${earLX - earBaseW * 0.28} ${earLY - tier.earLen * 0.7 + earDroop} L${earLX + earBaseW * 0.35} ${earLY - tier.earLen * 0.25 + earDroop * 0.5} Z`}
-                      fill="#ffb3c1"
-                    />
-                    <path
-                      d={`M${earRX + 3} ${earLY - 4} L${earRX + earBaseW * 0.28} ${earLY - tier.earLen * 0.7 + earDroop} L${earRX - earBaseW * 0.35} ${earLY - tier.earLen * 0.25 + earDroop * 0.5} Z`}
-                      fill="#ffb3c1"
-                    />
-                  </>
-                )}
+                {/* ears — always proper triangles with a pink inner ear */}
+                <path
+                  d={`M${earLX - earBaseHalf * 0.5} ${earLY + earBaseHalf * 0.3} L${earLX - earBaseHalf * 0.15} ${earLY - tier.earLen + earDroop} L${earLX + earBaseHalf * 0.75} ${earLY + earBaseHalf * 0.15} Z`}
+                  fill={fur.a}
+                  stroke={fur.outline}
+                  strokeWidth="1.3"
+                  strokeOpacity="0.3"
+                />
+                <path
+                  d={`M${earRX + earBaseHalf * 0.5} ${earLY + earBaseHalf * 0.3} L${earRX + earBaseHalf * 0.15} ${earLY - tier.earLen + earDroop} L${earRX - earBaseHalf * 0.75} ${earLY + earBaseHalf * 0.15} Z`}
+                  fill={fur.a}
+                  stroke={fur.outline}
+                  strokeWidth="1.3"
+                  strokeOpacity="0.3"
+                />
+                <path
+                  d={`M${earLX - earBaseHalf * 0.28} ${earLY + earBaseHalf * 0.1} L${earLX - earBaseHalf * 0.08} ${earLY - tier.earLen * 0.68 + earDroop} L${earLX + earBaseHalf * 0.45} ${earLY - earBaseHalf * 0.02} Z`}
+                  fill="#ffb3c1"
+                />
+                <path
+                  d={`M${earRX + earBaseHalf * 0.28} ${earLY + earBaseHalf * 0.1} L${earRX + earBaseHalf * 0.08} ${earLY - tier.earLen * 0.68 + earDroop} L${earRX - earBaseHalf * 0.45} ${earLY - earBaseHalf * 0.02} Z`}
+                  fill="#ffb3c1"
+                />
 
-                <ellipse cx={headCX} cy={headCY} rx={tier.headRX} ry={tier.headRY} fill={fur.a} />
+                <ellipse
+                  cx={headCX}
+                  cy={headCY}
+                  rx={tier.headRX}
+                  ry={tier.headRY}
+                  fill={fur.a}
+                  stroke={fur.outline}
+                  strokeWidth="1.5"
+                  strokeOpacity="0.35"
+                />
 
                 <circle
-                  cx={headCX - tier.headRX * 0.62}
-                  cy={headCY + tier.headRY * 0.32}
-                  r={tier.headRX * 0.16}
+                  cx={headCX - tier.headRX * 0.6}
+                  cy={headCY + tier.headRY * 0.34}
+                  r={tier.headRX * 0.17}
                   fill={fur.cheek}
-                  opacity="0.7"
+                  opacity="0.65"
                 />
                 <circle
-                  cx={headCX + tier.headRX * 0.62}
-                  cy={headCY + tier.headRY * 0.32}
-                  r={tier.headRX * 0.16}
+                  cx={headCX + tier.headRX * 0.6}
+                  cy={headCY + tier.headRY * 0.34}
+                  r={tier.headRX * 0.17}
                   fill={fur.cheek}
-                  opacity="0.7"
+                  opacity="0.65"
                 />
 
                 {tier.furTuft && (
                   <>
                     <path
-                      d={`M${headCX - tier.headRX * 0.95} ${headCY + tier.headRY * 0.1} q-6 8 0 16`}
+                      d={`M${headCX - tier.headRX * 0.96} ${headCY + tier.headRY * 0.12} q-7 9 0 18`}
                       stroke={fur.a}
-                      strokeWidth="4"
+                      strokeWidth="4.5"
                       fill="none"
                       strokeLinecap="round"
                     />
                     <path
-                      d={`M${headCX + tier.headRX * 0.95} ${headCY + tier.headRY * 0.1} q6 8 0 16`}
+                      d={`M${headCX + tier.headRX * 0.96} ${headCY + tier.headRY * 0.12} q7 9 0 18`}
                       stroke={fur.a}
-                      strokeWidth="4"
+                      strokeWidth="4.5"
                       fill="none"
                       strokeLinecap="round"
                     />
                   </>
                 )}
 
-                {tier.eyesClosed ? (
+                {/* eyes — always open, sized and shaped by tier + condition */}
+                {critical ? (
                   <>
                     <path
-                      d={`M${headCX - 14} ${headCY} q6 4 12 0`}
-                      stroke="#3a2a2a"
-                      strokeWidth="2.2"
-                      fill="none"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d={`M${headCX + 2} ${headCY} q6 4 12 0`}
-                      stroke="#3a2a2a"
-                      strokeWidth="2.2"
-                      fill="none"
-                      strokeLinecap="round"
-                    />
-                  </>
-                ) : critical ? (
-                  <>
-                    <path
-                      d={`M${headCX - tier.headRX * 0.34 - tier.eyeRX} ${headCY} Q${headCX - tier.headRX * 0.34} ${headCY + tier.eyeRX * 0.6} ${headCX - tier.headRX * 0.34 + tier.eyeRX} ${headCY}`}
+                      d={`M${headCX - eyeDX - tier.eyeR} ${headCY} Q${headCX - eyeDX} ${headCY + tier.eyeR * 0.7} ${headCX - eyeDX + tier.eyeR} ${headCY}`}
                       stroke="#3a2a2a"
                       strokeWidth="2.4"
                       fill="none"
                       strokeLinecap="round"
                     />
                     <path
-                      d={`M${headCX + tier.headRX * 0.34 - tier.eyeRX} ${headCY} Q${headCX + tier.headRX * 0.34} ${headCY + tier.eyeRX * 0.6} ${headCX + tier.headRX * 0.34 + tier.eyeRX} ${headCY}`}
+                      d={`M${headCX + eyeDX - tier.eyeR} ${headCY} Q${headCX + eyeDX} ${headCY + tier.eyeR * 0.7} ${headCX + eyeDX + tier.eyeR} ${headCY}`}
                       stroke="#3a2a2a"
                       strokeWidth="2.4"
                       fill="none"
@@ -555,25 +397,25 @@ export function CatGame({ stage, health }: Props) {
                 ) : condition === "sick" ? (
                   <>
                     <path
-                      d={`M${headCX - tier.headRX * 0.34 - 5} ${headCY - 4} L${headCX - tier.headRX * 0.34 + 5} ${headCY + 4}`}
+                      d={`M${headCX - eyeDX - 5} ${headCY - 4} L${headCX - eyeDX + 5} ${headCY + 4}`}
                       stroke="#3a2a2a"
                       strokeWidth="2.6"
                       strokeLinecap="round"
                     />
                     <path
-                      d={`M${headCX - tier.headRX * 0.34 + 5} ${headCY - 4} L${headCX - tier.headRX * 0.34 - 5} ${headCY + 4}`}
+                      d={`M${headCX - eyeDX + 5} ${headCY - 4} L${headCX - eyeDX - 5} ${headCY + 4}`}
                       stroke="#3a2a2a"
                       strokeWidth="2.6"
                       strokeLinecap="round"
                     />
                     <path
-                      d={`M${headCX + tier.headRX * 0.34 - 5} ${headCY - 4} L${headCX + tier.headRX * 0.34 + 5} ${headCY + 4}`}
+                      d={`M${headCX + eyeDX - 5} ${headCY - 4} L${headCX + eyeDX + 5} ${headCY + 4}`}
                       stroke="#3a2a2a"
                       strokeWidth="2.6"
                       strokeLinecap="round"
                     />
                     <path
-                      d={`M${headCX + tier.headRX * 0.34 + 5} ${headCY - 4} L${headCX + tier.headRX * 0.34 - 5} ${headCY + 4}`}
+                      d={`M${headCX + eyeDX + 5} ${headCY - 4} L${headCX + eyeDX - 5} ${headCY + 4}`}
                       stroke="#3a2a2a"
                       strokeWidth="2.6"
                       strokeLinecap="round"
@@ -582,14 +424,14 @@ export function CatGame({ stage, health }: Props) {
                 ) : tier.squint ? (
                   <>
                     <path
-                      d={`M${headCX - tier.headRX * 0.34 - 6} ${headCY} Q${headCX - tier.headRX * 0.34} ${headCY - 7} ${headCX - tier.headRX * 0.34 + 6} ${headCY}`}
+                      d={`M${headCX - eyeDX - 6} ${headCY} Q${headCX - eyeDX} ${headCY - 7} ${headCX - eyeDX + 6} ${headCY}`}
                       stroke="#3a2a2a"
                       strokeWidth="3"
                       fill="none"
                       strokeLinecap="round"
                     />
                     <path
-                      d={`M${headCX + tier.headRX * 0.34 - 6} ${headCY} Q${headCX + tier.headRX * 0.34} ${headCY - 7} ${headCX + tier.headRX * 0.34 + 6} ${headCY}`}
+                      d={`M${headCX + eyeDX - 6} ${headCY} Q${headCX + eyeDX} ${headCY - 7} ${headCX + eyeDX + 6} ${headCY}`}
                       stroke="#3a2a2a"
                       strokeWidth="3"
                       fill="none"
@@ -604,36 +446,36 @@ export function CatGame({ stage, health }: Props) {
                     }}
                   >
                     <ellipse
-                      cx={headCX - tier.headRX * 0.34}
+                      cx={headCX - eyeDX}
                       cy={headCY}
-                      rx={tier.eyeRX}
-                      ry={tier.eyeRY}
+                      rx={tier.eyeR}
+                      ry={tier.eyeR * 1.12}
                       fill="#3a2a2a"
                     />
                     <ellipse
-                      cx={headCX + tier.headRX * 0.34}
+                      cx={headCX + eyeDX}
                       cy={headCY}
-                      rx={tier.eyeRX}
-                      ry={tier.eyeRY}
+                      rx={tier.eyeR}
+                      ry={tier.eyeR * 1.12}
                       fill="#3a2a2a"
                     />
                     <circle
-                      cx={headCX - tier.headRX * 0.34 - tier.eyeRX * 0.3}
-                      cy={headCY - tier.eyeRY * 0.35}
-                      r={Math.max(1, tier.eyeRX * 0.22)}
+                      cx={headCX - eyeDX - tier.eyeR * 0.32}
+                      cy={headCY - tier.eyeR * 0.4}
+                      r={Math.max(1.2, tier.eyeR * 0.26)}
                       fill="#fff"
                     />
                     <circle
-                      cx={headCX + tier.headRX * 0.34 - tier.eyeRX * 0.3}
-                      cy={headCY - tier.eyeRY * 0.35}
-                      r={Math.max(1, tier.eyeRX * 0.22)}
+                      cx={headCX + eyeDX - tier.eyeR * 0.32}
+                      cy={headCY - tier.eyeR * 0.4}
+                      r={Math.max(1.2, tier.eyeR * 0.26)}
                       fill="#fff"
                     />
                   </g>
                 )}
 
                 <path
-                  d={`M${headCX - 4} ${headCY + tier.headRY * 0.24} L${headCX + 4} ${headCY + tier.headRY * 0.24} L${headCX} ${headCY + tier.headRY * 0.24 + 5} Z`}
+                  d={`M${headCX - 4} ${headCY + tier.headRY * 0.26} L${headCX + 4} ${headCY + tier.headRY * 0.26} L${headCX} ${headCY + tier.headRY * 0.26 + 5} Z`}
                   fill="#ff8fa3"
                 />
                 <path
@@ -644,62 +486,31 @@ export function CatGame({ stage, health }: Props) {
                   strokeLinecap="round"
                 />
 
-                {tier.whiskers && (
-                  <>
+                {/* whiskers — always present, short for babies, long for adults */}
+                {[-4, 3, 10].map((dy, i) => (
+                  <g key={i}>
                     <line
-                      x1={headCX - tier.headRX * 0.55}
-                      y1={headCY + tier.headRY * 0.24}
-                      x2={headCX - tier.headRX * 1.25}
-                      y2={headCY + tier.headRY * 0.2}
+                      x1={headCX - tier.headRX * 0.62}
+                      y1={headCY + tier.headRY * 0.22 + dy * 0.4}
+                      x2={headCX - tier.headRX * 0.62 - tier.whiskerLen}
+                      y2={headCY + tier.headRY * 0.22 + dy}
                       stroke="#3a2a2a"
                       strokeWidth="1"
                     />
                     <line
-                      x1={headCX - tier.headRX * 0.55}
-                      y1={headCY + tier.headRY * 0.32}
-                      x2={headCX - tier.headRX * 1.25}
-                      y2={headCY + tier.headRY * 0.34}
+                      x1={headCX + tier.headRX * 0.62}
+                      y1={headCY + tier.headRY * 0.22 + dy * 0.4}
+                      x2={headCX + tier.headRX * 0.62 + tier.whiskerLen}
+                      y2={headCY + tier.headRY * 0.22 + dy}
                       stroke="#3a2a2a"
                       strokeWidth="1"
                     />
-                    <line
-                      x1={headCX - tier.headRX * 0.55}
-                      y1={headCY + tier.headRY * 0.4}
-                      x2={headCX - tier.headRX * 1.25}
-                      y2={headCY + tier.headRY * 0.48}
-                      stroke="#3a2a2a"
-                      strokeWidth="1"
-                    />
-                    <line
-                      x1={headCX + tier.headRX * 0.55}
-                      y1={headCY + tier.headRY * 0.24}
-                      x2={headCX + tier.headRX * 1.25}
-                      y2={headCY + tier.headRY * 0.2}
-                      stroke="#3a2a2a"
-                      strokeWidth="1"
-                    />
-                    <line
-                      x1={headCX + tier.headRX * 0.55}
-                      y1={headCY + tier.headRY * 0.32}
-                      x2={headCX + tier.headRX * 1.25}
-                      y2={headCY + tier.headRY * 0.34}
-                      stroke="#3a2a2a"
-                      strokeWidth="1"
-                    />
-                    <line
-                      x1={headCX + tier.headRX * 0.55}
-                      y1={headCY + tier.headRY * 0.4}
-                      x2={headCX + tier.headRX * 1.25}
-                      y2={headCY + tier.headRY * 0.48}
-                      stroke="#3a2a2a"
-                      strokeWidth="1"
-                    />
-                  </>
-                )}
+                  </g>
+                ))}
 
-                {tier.accessory === "collar" && (
+                {(tier.accessory === "collar" || tier.accessory === "bow") && (
                   <path
-                    d={`M${headCX - tier.headRX * 0.7} ${headCY + tier.headRY * 0.62} Q${headCX} ${headCY + tier.headRY * 0.78} ${headCX + tier.headRX * 0.7} ${headCY + tier.headRY * 0.62}`}
+                    d={`M${headCX - tier.headRX * 0.68} ${headCY + tier.headRY * 0.64} Q${headCX} ${headCY + tier.headRY * 0.8} ${headCX + tier.headRX * 0.68} ${headCY + tier.headRY * 0.64}`}
                     stroke="#ff9ec2"
                     strokeWidth="6"
                     fill="none"
@@ -707,19 +518,13 @@ export function CatGame({ stage, health }: Props) {
                 )}
                 {tier.accessory === "bow" && (
                   <>
+                    <circle cx={headCX} cy={headCY + tier.headRY * 0.74} r="4" fill="#e0507a" />
                     <path
-                      d={`M${headCX - tier.headRX * 0.7} ${headCY + tier.headRY * 0.62} Q${headCX} ${headCY + tier.headRY * 0.78} ${headCX + tier.headRX * 0.7} ${headCY + tier.headRY * 0.62}`}
-                      stroke="#ff9ec2"
-                      strokeWidth="6"
-                      fill="none"
-                    />
-                    <circle cx={headCX} cy={headCY + tier.headRY * 0.72} r="4" fill="#e0507a" />
-                    <path
-                      d={`M${headCX} ${headCY + tier.headRY * 0.72} l-10 -6 l2 8 Z`}
+                      d={`M${headCX} ${headCY + tier.headRY * 0.74} l-10 -6 l2 8 Z`}
                       fill="#ff8fb0"
                     />
                     <path
-                      d={`M${headCX} ${headCY + tier.headRY * 0.72} l10 -6 l-2 8 Z`}
+                      d={`M${headCX} ${headCY + tier.headRY * 0.74} l10 -6 l-2 8 Z`}
                       fill="#ff8fb0"
                     />
                   </>
@@ -727,12 +532,17 @@ export function CatGame({ stage, health }: Props) {
                 {tier.accessory === "hat" && (
                   <>
                     <path
-                      d={`M${headCX - 18} ${headCY - tier.headRY * 0.9 + 4} L${headCX - 9} ${headCY - tier.headRY * 0.9 - 17} L${headCX} ${headCY - tier.headRY * 0.9} L${headCX + 9} ${headCY - tier.headRY * 0.9 - 17} L${headCX + 18} ${headCY - tier.headRY * 0.9 + 4} Z`}
+                      d={`M${headCX - 18} ${headCY - tier.headRY * 0.92 + 4} L${headCX - 9} ${headCY - tier.headRY * 0.92 - 17} L${headCX} ${headCY - tier.headRY * 0.92} L${headCX + 9} ${headCY - tier.headRY * 0.92 - 17} L${headCX + 18} ${headCY - tier.headRY * 0.92 + 4} Z`}
                       fill="#ffd76a"
                       stroke="#c99a2a"
                       strokeWidth="1.5"
                     />
-                    <circle cx={headCX} cy={headCY - tier.headRY * 0.9 - 10} r="3" fill="#ff6b6b" />
+                    <circle
+                      cx={headCX}
+                      cy={headCY - tier.headRY * 0.92 - 10}
+                      r="3"
+                      fill="#ff6b6b"
+                    />
                   </>
                 )}
               </g>
