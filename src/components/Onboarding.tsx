@@ -28,7 +28,7 @@ export function Onboarding() {
           </h1>
           <p className="text-muted-foreground mt-2 text-sm text-balance">
             {step === 1 && "Build habits that quietly grow something adorable each day."}
-            {step === 2 && "Your daily habits fuel this world. One habit or many — they all feed the same game."}
+            {step === 2 && "Your daily habits fuel this world. Whether it's one habit or several, they all feed the same game."}
             {step === 3 && "Complete your habits today. At 10 PM your world updates."}
           </p>
         </div>
@@ -36,7 +36,7 @@ export function Onboarding() {
         {step === 1 && (
           <div>
             <p className="text-sm text-muted-foreground mb-4">
-              Start with one habit — you can add more later.
+              Start with one habit. You can add more later.
             </p>
             <Button className="rounded-xl w-full" onClick={() => setAddOpen(true)}>
               + Add your first habit
@@ -99,10 +99,10 @@ export function Onboarding() {
             <div className="glass-soft rounded-2xl p-4 text-sm">
               <div className="font-medium mb-1">How your world grows</div>
               <ul className="text-muted-foreground space-y-1.5 list-disc pl-5">
-                <li>Finish most of your rituals for the day and your world takes a happy step forward — the plant looks greener, the rocket edges closer, the kitty gets a little bigger.</li>
-                <li>Get through about half of them and things hold steady — a gentle nudge to push a little more.</li>
-                <li>Slip and miss most of your rituals and your world starts to droop — the plant wilts, the fuel runs low, the kitten looks a bit under the weather.</li>
-                <li>Miss a whole day and your world takes a real hit. It's never over though — one good day starts turning it around.</li>
+                <li>Finish most of your rituals for the day and your world takes a happy step forward. The plant looks greener, the rocket edges closer, the kitty gets a little bigger.</li>
+                <li>Get through about half of them and things hold steady. That's your gentle nudge to do a little more.</li>
+                <li>Miss most of your rituals and your world starts to droop. The plant wilts, the fuel runs low, the kitten looks a bit under the weather.</li>
+                <li>Miss a whole day and your world takes a real hit. It's never over, though. One good day starts turning it around.</li>
               </ul>
             </div>
             <Button onClick={() => completeOnboarding()} className="w-full rounded-xl">

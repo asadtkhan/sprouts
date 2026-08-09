@@ -87,8 +87,8 @@ export function AddHabitDialog({ open, onOpenChange, defaultKind = "daily" }: Pr
             </DialogTitle>
             <DialogDescription className="text-xs">
               {kind === "daily"
-                ? "Something you commit to on a schedule — it grows your main world."
-                : "Something you do whenever — each log grows its own little world."}
+                ? "Something you commit to on a schedule. It grows your main world."
+                : "Something you do whenever you like. Each log grows its own little world."}
             </DialogDescription>
           </DialogHeader>
 
@@ -252,7 +252,7 @@ export function AddHabitDialog({ open, onOpenChange, defaultKind = "daily" }: Pr
                 })}
               </div>
               <p className="text-[11px] text-muted-foreground mt-3">
-                Personal worlds only ever move forward — every log is one step of thirty.
+                Personal worlds only ever move forward. Every log is one step of thirty.
               </p>
             </Section>
           )}

@@ -18,9 +18,9 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/profile")({
   head: () => ({
     meta: [
-      { title: "Profile — Sprout" },
+      { title: "Profile · Sprout" },
       { name: "description", content: "Your Sprout profile, streaks, and account." },
-      { property: "og:title", content: "Profile — Sprout" },
+      { property: "og:title", content: "Profile · Sprout" },
       { property: "og:description", content: "Your Sprout profile, streaks, and account." },
     ],
   }),
@@ -57,7 +57,7 @@ function ProfilePage() {
         <div className="flex-1 min-w-0">
           <div className="font-medium truncate">{displayName}</div>
           <div className="text-xs text-muted-foreground">
-            {s.hasAccount ? "Progress saved to account" : "Local only — create an account to sync"}
+            {s.hasAccount ? "Progress saved to account" : "Local only. Create an account to sync"}
           </div>
         </div>
         {!s.hasAccount && (

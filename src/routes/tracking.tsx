@@ -14,9 +14,9 @@ import { useAppState, isDueOn, todayISO, dayProgress, daysInMonth, overallStreak
 export const Route = createFileRoute("/tracking")({
   head: () => ({
     meta: [
-      { title: "Tracking — Sprout" },
+      { title: "Tracking · Sprout" },
       { name: "description", content: "Monthly calendar and weekly rhythms for your habits." },
-      { property: "og:title", content: "Tracking — Sprout" },
+      { property: "og:title", content: "Tracking · Sprout" },
       { property: "og:description", content: "Monthly calendar and weekly rhythms for your habits." },
     ],
   }),
@@ -121,7 +121,7 @@ function TrackingPage() {
 
       <div data-tour="tracking-calendar" className="glass-pop rounded-3xl p-4 mb-4">
         <div className="flex items-center justify-between mb-3">
-          <div className="text-sm font-medium">Daily completion — {monthLabel}</div>
+          <div className="text-sm font-medium">Daily completion, {monthLabel}</div>
           <div className="text-[11px] text-muted-foreground">by day of month</div>
         </div>
         <div className="grid grid-cols-7 gap-1.5 mb-2 text-[10px] text-muted-foreground text-center">
@@ -170,7 +170,7 @@ function TrackingPage() {
 
       <div className="glass-pop rounded-3xl p-4 mb-4">
         <div className="flex items-center justify-between mb-3">
-          <div className="text-sm font-medium">Personal activities — last 7 days</div>
+          <div className="text-sm font-medium">Personal activities, last 7 days</div>
           {topWeekday && (
             <div className="text-[11px] text-muted-foreground">
               Most active: <span className="text-foreground font-medium">{topWeekday.day}</span>
@@ -193,7 +193,7 @@ function TrackingPage() {
       </div>
 
       <div className="glass-pop rounded-3xl p-4 mb-4">
-        <div className="text-sm font-medium mb-3">Focus minutes — last 15 days</div>
+        <div className="text-sm font-medium mb-3">Focus minutes, last 15 days</div>
         {s.focusSessions.length === 0 ? (
           <Empty text="Start a focus session to see it here." />
         ) : (

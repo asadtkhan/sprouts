@@ -22,10 +22,10 @@ import { AddHabitDialog } from "@/components/AddHabitDialog";
 export const Route = createFileRoute("/personal")({
   head: () => ({
     meta: [
-      { title: "Personal activities — Sprout" },
-      { name: "description", content: "Free-form personal activities, each with its own little world to grow." },
-      { property: "og:title", content: "Personal activities — Sprout" },
-      { property: "og:description", content: "Free-form personal activities, each with its own little world to grow." },
+      { title: "Personal activities · Sprout" },
+      { name: "description", content: "Personal activities, each with its own little world to grow." },
+      { property: "og:title", content: "Personal activities · Sprout" },
+      { property: "og:description", content: "Personal activities, each with its own little world to grow." },
     ],
   }),
   component: PersonalPage,
@@ -49,11 +49,11 @@ function PersonalPage() {
       <div className="mb-6 flex items-end justify-between">
         <div>
           <div className="text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-1">
-            <Wand2 className="w-3 h-3" /> Free-form
+            <Wand2 className="w-3 h-3" /> Your own pace
           </div>
           <h1 className="font-display text-3xl md:text-4xl">Personal activities</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Anything you do at your own pace — every log grows its own little world.
+            Anything you do in your own time. Every log grows its own little world.
           </p>
         </div>
         <Button onClick={() => setAddOpen(true)} size="sm" className="rounded-full">
@@ -61,16 +61,17 @@ function PersonalPage() {
         </Button>
       </div>
 
-      {items.length === 0 && (
-        <Link to="/" className="glass-pop rounded-2xl p-6 text-center block">
-          <div className="font-medium">No personal activities yet</div>
-          <div className="text-sm text-muted-foreground mt-1">
-            Tap Add to start one — like “Play guitar” or “Sketch”.
-          </div>
-        </Link>
-      )}
-
-      <div data-tour="personal-list" className="space-y-4">
+      {items.length === 0 ? (
+        <div data-tour="personal-list">
+          <Link to="/" className="glass-pop rounded-2xl p-6 text-center block">
+            <div className="font-medium">Nothing here yet</div>
+            <div className="text-sm text-muted-foreground mt-1">
+              Tap Add to start one, like "Play guitar" or "Sketch"
+            </div>
+          </Link>
+        </div>
+      ) : (
+        <div data-tour="personal-list" className="space-y-4">
         {items.map((h) => {
           const kind: GameKind = h.gameKind ?? "tree";
           const lastDate = h.individualLogs[h.individualLogs.length - 1];
@@ -115,7 +116,7 @@ function PersonalPage() {
                   className="flex-1 rounded-xl"
                   onClick={() => {
                     logIndividual(h.id);
-                    toast.success(`Marked done for today — ${h.name} grows tonight.`);
+                    toast.success(`Marked done for today. ${h.name} grows tonight.`);
                   }}
                 >
                   <Check className="w-4 h-4 mr-1" /> {loggedToday ? "Done today" : "I did it"}
@@ -152,7 +153,8 @@ function PersonalPage() {
             </div>
           );
         })}
-      </div>
+        </div>
+      )}
 
       <AddHabitDialog open={addOpen} onOpenChange={setAddOpen} defaultKind="individual" />
     </div>

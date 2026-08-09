@@ -18,10 +18,10 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/focus")({
   head: () => ({
     meta: [
-      { title: "Focus session — Sprout" },
-      { name: "description", content: "Focus for as long as you like — or plan work/rest intervals." },
-      { property: "og:title", content: "Focus session — Sprout" },
-      { property: "og:description", content: "Focus for as long as you like — or plan work/rest intervals." },
+      { title: "Focus session · Sprout" },
+      { name: "description", content: "Focus for as long as you like, or plan work and rest intervals." },
+      { property: "og:title", content: "Focus session · Sprout" },
+      { property: "og:description", content: "Focus for as long as you like, or plan work and rest intervals." },
     ],
   }),
   component: FocusPage,
@@ -186,7 +186,7 @@ function FocusPage() {
               )}
             >
               <span className="font-medium">
-                {phase === "work" ? "🌿 Working…" : "☕️ Rest — breathe"}
+                {phase === "work" ? "🌿 Working…" : "☕️ Resting, breathe"}
               </span>
               <span className="tabular-nums text-muted-foreground">
                 {formatMs(phaseRemaining)} left
@@ -220,7 +220,7 @@ function FocusPage() {
               <Button
                 onClick={() => {
                   endFocus();
-                  toast.success(`Session ended — you picked ${fruits} fruit${fruits === 1 ? "" : "s"} 🍎`);
+                  toast.success(`Session ended. You picked ${fruits} fruit${fruits === 1 ? "" : "s"} 🍎`);
                 }}
                 className="rounded-xl"
               >
