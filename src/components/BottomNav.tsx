@@ -19,16 +19,13 @@ export function BottomNav() {
   return (
     <>
       {/* Spacer so page content isn't hidden behind the floating bar */}
-      <div className="h-24" aria-hidden />
+      <div className="h-16" aria-hidden />
       <nav
         data-tour="nav"
         className="fixed bottom-0 inset-x-0 z-40 flex justify-center px-4"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 14px)" }}
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 10px)" }}
       >
-        <div
-          className="glass-soft flex items-center gap-1 rounded-full p-2"
-          style={{ boxShadow: "var(--glass-shadow)" }}
-        >
+        <div className="glass-pop flex items-center gap-1 rounded-full p-2">
           {items.map((it) => {
             const active = pathname === it.to;
             const Icon = it.icon;
