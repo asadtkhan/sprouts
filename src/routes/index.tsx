@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bell, ListChecks, BookHeart, Wand2, Timer, ChevronRight, Apple } from "lucide-react";
+import { Bell, ListChecks, Wand2, ChevronRight, Flag } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -21,6 +21,8 @@ import { TreeGame } from "@/components/games/TreeGame";
 import { SpaceGame } from "@/components/games/SpaceGame";
 import { CatGame } from "@/components/games/CatGame";
 import { TreehouseGame } from "@/components/games/TreehouseGame";
+import { CarRace } from "@/components/games/CarRace";
+import { useRace } from "@/lib/race";
 
 
 
@@ -197,38 +199,20 @@ function Hub() {
           )}
         </Link>
 
-        {/* Focus session hub card */}
-        <Link to="/focus" data-tour="home-focus" className="glass-pop rounded-3xl p-4 flex items-center gap-4 group">
-          <div className="w-11 h-11 rounded-full bg-accent/60 text-accent-foreground flex items-center justify-center">
-            <Timer className="w-5 h-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="font-display text-lg">Focus session</div>
-            <div className="text-xs text-muted-foreground">
-              {s.activeFocus
-                ? `In progress: ${s.activeFocus.name}`
-                : "Open-ended, or plan work/rest intervals"}
+        {/* Friend race — multiplayer */}
+        <Link to="/race" data-tour="home-race" className="glass-pop rounded-3xl p-4 block group">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Flag className="w-3 h-3" /> Friend race
+              </div>
+              <div className="font-display text-xl">Race a friend</div>
             </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-0.5 transition" />
           </div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Apple className="w-3.5 h-3.5 text-red-500" /> {s.totalFruits}
-          </div>
-          <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-0.5 transition" />
+          <RaceThumb />
         </Link>
 
-        {/* Journal */}
-        <Link to="/journal" data-tour="home-journal" className="glass-pop rounded-3xl p-4 flex items-center gap-4 group">
-          <div className="w-11 h-11 rounded-full bg-primary/15 text-primary flex items-center justify-center">
-            <BookHeart className="w-5 h-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="font-display text-lg">Journal</div>
-            <div className="text-xs text-muted-foreground">
-              Reflect on your day · a kitten will keep you company
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-0.5 transition" />
-        </Link>
 
       </div>
 
@@ -252,3 +236,33 @@ function GameThumb() {
   );
 }
 
+function RaceThumb() {
+  const { race, me, opponent } = useRace();
+  if (!race || !me) {
+    return (
+      <div>
+        <CarRace meName="You" meStep={2} oppName="Friend" oppStep={4} compact />
+        <div className="mt-2 text-sm text-muted-foreground">
+          Pick one activity, share a code and race a friend to the finish line.
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <CarRace
+        meName={`${me.name} (you)`}
+        meStep={me.step}
+        oppName={opponent?.name ?? null}
+        oppStep={opponent ? opponent.step : null}
+        compact
+      />
+      <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+        <span className="truncate">{race.activity}</span>
+        <span>
+          You {me.step} · {opponent ? `${opponent.name} ${opponent.step}` : `Code ${race.code}`}
+        </span>
+      </div>
+    </div>
+  );
+}
