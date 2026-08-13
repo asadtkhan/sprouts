@@ -14,7 +14,7 @@ export type TripBeat = {
   caption: string;
 };
 
-/** Story beats across the 30 levels. */
+/** Story beats across the levels. */
 export function tripBeat(step: number, idle = 0): TripBeat {
   if (idle >= 2)
     return {
@@ -43,134 +43,303 @@ export function BikeTrip({ step, idle = 0, riderA, riderB, compact }: Props) {
   const x = (Math.min(step, TRIP_LEVELS) + 1) * SEG;
   const viewW = compact ? 220 : 340;
   const camera = Math.max(0, Math.min(trackW - viewW, x - viewW * 0.42));
+  
   const resting = idle >= 2;
   const punctured = idle >= 4;
+  const moving = !resting;
   const arrived = step >= TRIP_LEVELS;
-  const climbing = step > 18;
+  
+  // Progress determines environmental changes (0.0 to 1.0)
+  const progress = Math.min(1, step / TRIP_LEVELS);
+  const climbing = progress > 0.6;
+  const highAltitude = progress > 0.8;
 
   return (
     <div className={cn("relative w-full overflow-hidden rounded-2xl", compact ? "h-28" : "h-56")}>
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,#ffe7c9_0%,#ffd9df_28%,#dbe9ff_60%,#cfe7d6_61%,#bfdcc7_100%)]" />
-      {/* far mountains drift slowly with the camera */}
-      <div className="absolute inset-0" style={{ transform: `translateX(${-camera * 0.25}px)` }}>
+      <style>{`
+        @keyframes bikeBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-1.5px)} }
+        @keyframes wheelSpin { 100%{transform:rotate(360deg)} }
+        @keyframes puff { 0%{opacity:0.6;transform:translate(0,0) scale(0.6)} 100%{opacity:0;transform:translate(-15px,-8px) scale(1.6)} }
+        @keyframes dashScroll { 0%{stroke-dashoffset: 24} 100%{stroke-dashoffset: 0} }
+        @keyframes horseGallop { 
+          0%, 100% { transform: translateY(0) rotate(-2deg); } 
+          25% { transform: translateY(-4px) rotate(4deg); } 
+          75% { transform: translateY(-2px) rotate(-4deg); } 
+        }
+        @keyframes cloudDrift { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-15px); } }
+        @keyframes waterFlow { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
+      `}</style>
+
+      {/* Dynamic Sky Gradient (Transitions from plains to high mountains) */}
+      <div 
+        className="absolute inset-0 transition-colors duration-1000"
+        style={{
+          background: highAltitude 
+            ? "linear-gradient(180deg, #a7cbf2 0%, #d6e8fa 50%, #f0f6fc 100%)" // Snowy mountain sky
+            : climbing 
+            ? "linear-gradient(180deg, #93c5fd 0%, #bfdbfe 50%, #e0f2fe 100%)" // Hill sky
+            : "linear-gradient(180deg, #ffe7c9 0%, #ffd9df 28%, #dbe9ff 60%, #cfe7d6 100%)" // Warm plains sky
+        }} 
+      />
+
+      {/* Layer 1: Far Mountains (Parallax moving slowest) */}
+      <div className="absolute inset-0" style={{ transform: `translateX(${-camera * 0.15}px)` }}>
         <svg width={trackW} height="100%" viewBox={`0 0 ${trackW} 200`} preserveAspectRatio="none">
-          {Array.from({ length: 14 }).map((_, i) => {
-            const bx = i * (trackW / 14);
-            const h = 40 + ((i * 37) % 46);
+          {Array.from({ length: 18 }).map((_, i) => {
+            const bx = i * (trackW / 18);
+            const h = 50 + ((i * 41) % 60);
+            const isSnowy = i > 12; // Far mountains become snowy towards the end of the track
             return (
               <g key={i}>
-                <path d={`M${bx} 120 L${bx + 70} ${120 - h} L${bx + 140} 120 Z`} fill="#9db6d8" opacity="0.75" />
-                <path d={`M${bx + 55} ${120 - h + 18} L${bx + 70} ${120 - h} L${bx + 85} ${120 - h + 18} Z`} fill="#ffffff" opacity="0.9" />
+                <path d={`M${bx} 120 L${bx + 80} ${120 - h} L${bx + 160} 120 Z`} fill={isSnowy ? "#8ba8c9" : "#9db6d8"} opacity="0.6" />
+                {(isSnowy || h > 80) && (
+                  <path d={`M${bx + 60} ${120 - h + 25} L${bx + 80} ${120 - h} L${bx + 100} ${120 - h + 25} Z`} fill="#ffffff" opacity="0.8" />
+                )}
               </g>
             );
           })}
         </svg>
       </div>
 
+      {/* Layer 2: Midground Hills (Parallax medium) */}
+      <div className="absolute inset-0" style={{ transform: `translateX(${-camera * 0.4}px)` }}>
+        <svg width={trackW} height="100%" viewBox={`0 0 ${trackW} 200`} preserveAspectRatio="none">
+          <path
+            d={`M0 135 Q ${trackW * 0.15} 100 ${trackW * 0.3} 135 T ${trackW * 0.6} 135 T ${trackW * 0.9} 135 T ${trackW} 135 L ${trackW} 200 L 0 200 Z`}
+            fill={highAltitude ? "#cadbea" : "#8ab597"}
+            opacity="0.8"
+          />
+          {/* Pine trees appearing towards the climb */}
+          {Array.from({ length: 15 }).map((_, i) => {
+            const tx = (trackW * 0.4) + i * 80 + ((i * 13) % 40);
+            if (tx > trackW) return null;
+            return (
+              <path key={`tree-${i}`} d={`M${tx} 135 L${tx+10} 105 L${tx+20} 135 Z`} fill={highAltitude ? "#5a7a6b" : "#4a7a58"} opacity="0.7" />
+            );
+          })}
+        </svg>
+      </div>
+
+      {/* Layer 3: The Road, Scenery Props, and Foreground (Moves 1:1 with camera) */}
       <div
         className="absolute inset-0"
         style={{ transform: `translateX(${-camera}px)`, width: trackW, transition: "transform 900ms ease-out" }}
       >
         <svg width={trackW} height="100%" viewBox={`0 0 ${trackW} 200`} preserveAspectRatio="none">
-          {/* hills */}
-          <path
-            d={`M0 128 Q ${trackW * 0.12} 96 ${trackW * 0.25} 128 T ${trackW * 0.5} 128 T ${trackW * 0.75} 128 T ${trackW} 128 L ${trackW} 200 L 0 200 Z`}
-            fill="#a9d3b2"
-            opacity="0.85"
+          
+          {/* Road Surface */}
+          <rect x="0" y="145" width={trackW} height="40" fill={highAltitude ? "#69727d" : "#5a5f74"} />
+          
+          {/* Scrolling Road Dashes */}
+          <line 
+            x1="0" y1="165" x2={trackW} y2="165" 
+            stroke="#ffffff" strokeWidth="3" strokeDasharray="12 12" opacity="0.5"
+            style={{ animation: moving ? "dashScroll 0.5s linear infinite" : "none" }}
           />
-          {/* road */}
-          <rect x="0" y="140" width={trackW} height="46" fill="#5a5f74" />
-          <rect x="0" y="140" width={trackW} height="3" fill="#ffffff" opacity="0.45" />
-          {Array.from({ length: TRIP_LEVELS + 2 }).map((_, i) => (
-            <rect key={i} x={i * SEG + 10} y={162} width={22} height="3" fill="#ffe9a8" opacity="0.8" />
-          ))}
-          {/* scenery props at story beats */}
+          
+          {/* Foreground Grass/Snow */}
+          <rect x="0" y="185" width={trackW} height="15" fill={highAltitude ? "#e2e8f0" : "#a4d982"} opacity="0.9" />
+
+          {/* --- STORY BEATS / PROPS --- */}
           <g>
-            {/* tea stall */}
-            <rect x={9 * SEG} y="118" width="26" height="22" rx="3" fill="#e8b06a" />
-            <path d={`M${9 * SEG - 4} 118 L${9 * SEG + 13} 106 L${9 * SEG + 30} 118 Z`} fill="#c2703f" />
-            {/* horses */}
-            <g opacity="0.95">
-              <path d={`M${13 * SEG} 132 q6 -10 16 -8 l6 -6 3 7 q7 3 5 12 l-4 8 -3 -7 -6 1 -2 7 -4 -7 -6 2 z`} fill="#8a5a3b" />
+            {/* Village Tea Stall (Stage 10 ~ 460px) */}
+            <g transform={`translate(${10 * SEG}, 115)`}>
+              <rect x="0" y="0" width="40" height="30" rx="2" fill="#d2a679" />
+              <path d="M-5 0 L20 -15 L45 0 Z" fill="#b06240" />
+              <rect x="5" y="15" width="30" height="15" fill="#8c6239" />
+              <circle cx="20" cy="12" r="3" fill="#cbd5e1" /> {/* Teapot */}
+              {/* Smoke from tea */}
+              <path d="M19 6 Q17 2 21 -2 T20 -6" stroke="#ffffff" strokeWidth="1.5" fill="none" opacity="0.6" style={{ animation: "puff 2s infinite" }} />
+              {/* Seller */}
+              <circle cx="10" cy="8" r="4" fill="#f6c89a" />
+              <rect x="6" y="12" width="8" height="18" fill="#4a5568" />
             </g>
-            {/* bridge rails */}
-            <rect x={17 * SEG} y="132" width={SEG * 1.6} height="4" fill="#c9a37a" />
-            {/* summit flag */}
-            <rect x={(TRIP_LEVELS + 1) * SEG} y="96" width="3" height="44" fill="#4b4f63" />
-            <path d={`M${(TRIP_LEVELS + 1) * SEG + 3} 96 l20 7 -20 7 z`} fill="#f97362" />
+
+            {/* Galloping Horses (Stage 14 ~ 644px) */}
+            <g transform={`translate(${14 * SEG}, 130)`}>
+              {/* Horse 1 (Background) */}
+              <g fill="#5c3a21" opacity="0.8" transform="scale(0.8) translate(30, -5)" style={{ animation: moving ? "horseGallop 0.6s ease-in-out infinite 0.1s" : "none", transformOrigin: "15px 15px" }}>
+                <path d="M10 20 Q15 5 25 5 L35 15 L40 10 L45 20 Q35 25 35 35 L30 40 L25 35 L15 40 L10 30 Z" />
+                <path d="M35 15 L32 5 L38 8 Z" /> {/* Ear */}
+                <path d="M10 20 Q0 25 5 35" stroke="#5c3a21" strokeWidth="3" fill="none" /> {/* Tail */}
+              </g>
+              {/* Horse 2 (Foreground) */}
+              <g fill="#8a5a3b" style={{ animation: moving ? "horseGallop 0.6s ease-in-out infinite" : "none", transformOrigin: "15px 15px" }}>
+                <path d="M10 20 Q15 5 25 5 L35 15 L40 10 L45 20 Q35 25 35 35 L30 40 L25 35 L15 40 L10 30 Z" />
+                <path d="M35 15 L32 5 L38 8 Z" /> {/* Ear */}
+                <path d="M10 20 Q0 25 5 35" stroke="#8a5a3b" strokeWidth="3" fill="none" /> {/* Tail */}
+              </g>
+            </g>
+
+            {/* River Crossing & Wooden Bridge (Stage 18 ~ 828px) */}
+            <g transform={`translate(${17.5 * SEG}, 145)`}>
+              {/* River water */}
+              <path d="M10 -15 L30 -15 L15 40 L-5 40 Z" fill="#60a5fa" opacity="0.8" />
+              <path d="M15 -10 L25 -10 L10 35 L0 35 Z" fill="#93c5fd" opacity="0.6" style={{ animation: "waterFlow 2s infinite" }} />
+              {/* Wooden Bridge Planks */}
+              {Array.from({ length: 7 }).map((_, i) => (
+                <rect key={i} x={-20 + i * 8} y="0" width="6" height="40" fill="#8b5a2b" rx="1" />
+              ))}
+              {/* Bridge Rails */}
+              <rect x="-25" y="-10" width="60" height="4" fill="#5c3a21" rx="2" />
+              <rect x="-25" y="42" width="60" height="4" fill="#5c3a21" rx="2" />
+            </g>
+
+            {/* Cloud Line / High Altitude (Stage 26 ~ 1196px) */}
+            <g transform={`translate(${25 * SEG}, 110)`} opacity="0.8" style={{ animation: "cloudDrift 8s ease-in-out infinite alternate" }}>
+              <circle cx="20" cy="30" r="25" fill="#ffffff" />
+              <circle cx="50" cy="15" r="35" fill="#ffffff" />
+              <circle cx="80" cy="35" r="20" fill="#ffffff" />
+              <circle cx="110" cy="20" r="30" fill="#ffffff" />
+            </g>
+
+            {/* Final Summit Pass (End of track) */}
+            <g transform={`translate(${(TRIP_LEVELS + 1) * SEG}, 100)`}>
+              {/* Summit Marker Flag */}
+              <rect x="0" y="0" width="4" height="45" fill="#4b4f63" />
+              <path d="M4 2 L25 10 L4 18 Z" fill="#ef4444" style={{ animation: "horseGallop 1s infinite" }} /> {/* Wind flutter */}
+              {/* Snow pile around base */}
+              <ellipse cx="2" cy="45" rx="15" ry="5" fill="#ffffff" />
+            </g>
           </g>
         </svg>
 
-        {/* the bike */}
+        {/* --- THE BIKE & RIDERS --- */}
         <div
           className="absolute"
           style={{
             left: x,
-            top: climbing ? "62%" : "68%",
+            // Adjust bike height based on terrain and puncture status
+            top: punctured ? "71%" : (climbing ? "62%" : "68%"),
             transform: "translate(-50%,-50%)",
             transition: "left 900ms ease-out, top 900ms ease-out",
+            zIndex: 10,
           }}
         >
           <div className="flex flex-col items-center gap-0.5">
-            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-white/90 text-foreground font-semibold whitespace-nowrap">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/95 text-foreground font-semibold whitespace-nowrap shadow-sm border border-slate-200">
               {riderB ? `${riderA} + ${riderB}` : riderA}
             </span>
+            
             <svg
-              width="72"
-              height="40"
-              viewBox="0 0 72 40"
-              style={{ animation: resting ? "none" : "bike-bob 1.1s ease-in-out infinite" }}
+              width="90"
+              height="55"
+              viewBox="0 0 90 55"
+              style={{ animation: moving ? "bikeBob 0.8s ease-in-out infinite" : "none" }}
             >
-              <ellipse cx="36" cy="35" rx="24" ry="3" fill="#000" opacity="0.16" />
-              {/* wheels */}
-              <circle cx="16" cy="29" r="8" fill="none" stroke="#22232e" strokeWidth="3" />
-              <circle
-                cx="56"
-                cy={punctured ? 31 : 29}
-                r={punctured ? 6.5 : 8}
-                fill="none"
-                stroke="#22232e"
-                strokeWidth={punctured ? 4 : 3}
-              />
-              {/* frame */}
-              <path d="M16 29 L30 18 L44 18 L56 29" stroke="#f97362" strokeWidth="3.5" fill="none" strokeLinecap="round" />
-              <path d="M30 18 L26 12" stroke="#4b4f63" strokeWidth="3" strokeLinecap="round" />
-              {/* riders */}
-              <g>
-                <circle cx="34" cy="8" r="4.5" fill="#f6c89a" />
-                <path d="M30 18 q4 -7 8 -6 l3 6 z" fill="#5b7cf9" />
+              {/* Drop shadow */}
+              <ellipse cx="45" cy="50" rx="30" ry="4" fill="#000" opacity="0.2" />
+
+              {/* Luggage (Packed bags on the back) */}
+              <g transform="translate(10, 18)">
+                <rect x="0" y="0" width="16" height="12" rx="3" fill="#6b7280" /> {/* Duffel */}
+                <rect x="2" y="-4" width="12" height="6" rx="2" fill="#d97706" /> {/* Sleeping bag */}
+                <line x1="4" y1="-5" x2="4" y2="12" stroke="#1f2937" strokeWidth="1.5" /> {/* Straps */}
+                <line x1="12" y1="-5" x2="12" y2="12" stroke="#1f2937" strokeWidth="1.5" />
               </g>
-              {riderB && (
-                <g>
-                  <circle cx="46" cy="9" r="4.2" fill="#e6b184" />
-                  <path d="M42 18 q4 -6 8 -5 l3 5 z" fill="#8b7cf6" />
+
+              {/* The Bike Frame */}
+              <g transform="translate(10, 20)">
+                {/* Wheels */}
+                {/* Rear Wheel (flattens if punctured) */}
+                <g transform="translate(10, 20)">
+                  {punctured ? (
+                    <ellipse cx="0" cy="5" rx="11" ry="6" fill="none" stroke="#1e293b" strokeWidth="4" />
+                  ) : (
+                    <circle cx="0" cy="0" r="10" fill="none" stroke="#1e293b" strokeWidth="4" strokeDasharray="8 4" style={{ animation: moving ? "wheelSpin 0.4s linear infinite" : "none", transformOrigin: "0px 0px" }} />
+                  )}
+                  <circle cx="0" cy="0" r="3" fill="#94a3b8" />
+                </g>
+                
+                {/* Front Wheel */}
+                <g transform="translate(56, 20)">
+                  <circle cx="0" cy="0" r="10" fill="none" stroke="#1e293b" strokeWidth="4" strokeDasharray="8 4" style={{ animation: moving ? "wheelSpin 0.4s linear infinite" : "none", transformOrigin: "0px 0px" }} />
+                  <circle cx="0" cy="0" r="3" fill="#94a3b8" />
+                </g>
+
+                {/* Engine & Chassis */}
+                <path d="M 10 20 L 25 10 L 45 10 L 56 20" stroke="#f43f5e" strokeWidth="4.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M 25 10 L 20 -2" stroke="#475569" strokeWidth="4" strokeLinecap="round" /> {/* Seat post */}
+                <path d="M 45 10 L 52 -5" stroke="#475569" strokeWidth="3" strokeLinecap="round" /> {/* Handlebar post */}
+                <path d="M 48 -5 Q 52 -10 58 -5" stroke="#1e293b" strokeWidth="2.5" fill="none" strokeLinecap="round" /> {/* Handlebars */}
+                
+                {/* Exhaust */}
+                <line x1="25" y1="18" x2="5" y2="18" stroke="#94a3b8" strokeWidth="3" strokeLinecap="round" />
+                
+                {/* Kickstand (Deployed when resting) */}
+                {resting && <line x1="30" y1="20" x2="26" y2="28" stroke="#000" strokeWidth="2.5" strokeLinecap="round" />}
+              </g>
+
+              {/* Exhaust Puffs */}
+              {moving && (
+                <g opacity="0.6">
+                  <circle cx="10" cy="38" r="4" fill="#ffffff" style={{ animation: "puff 1.2s ease-out infinite" }} />
+                  <circle cx="5" cy="36" r="3" fill="#ffffff" style={{ animation: "puff 1.2s ease-out 0.4s infinite" }} />
                 </g>
               )}
-              {/* exhaust puffs while moving */}
-              {!resting && (
-                <g opacity="0.55">
-                  <circle cx="6" cy="26" r="3" fill="#ffffff" style={{ animation: "puff 1.4s ease-out infinite" }} />
-                  <circle cx="2" cy="24" r="2.2" fill="#ffffff" style={{ animation: "puff 1.4s ease-out .5s infinite" }} />
-                </g>
-              )}
+
+              {/* Puncture Warning */}
               {punctured && (
-                <text x="56" y="16" fontSize="9" textAnchor="middle" fill="#c2413b">
-                  !
-                </text>
+                <g transform="translate(15, 10)">
+                  <circle cx="0" cy="0" r="8" fill="#ef4444" />
+                  <text x="0" y="3" fontSize="10" textAnchor="middle" fill="#ffffff" fontWeight="bold">!</text>
+                </g>
               )}
+
+              {/* --- RIDERS --- */}
+              {resting ? (
+                // Riders dismounted and sitting next to the bike
+                <g transform="translate(0, 35)">
+                  {/* Rider A Sitting */}
+                  <circle cx="15" cy="-8" r="5" fill="#f6c89a" /> {/* Head without helmet for break */}
+                  <path d="M 15 -3 Q 10 5 10 15 L 20 15 Q 20 5 15 -3 Z" fill="#3b82f6" /> {/* Body */}
+                  
+                  {/* Rider B Sitting */}
+                  {riderB && (
+                    <g transform="translate(15, 0)">
+                      <circle cx="15" cy="-7" r="4.5" fill="#e6b184" />
+                      <path d="M 15 -3 Q 10 5 10 15 L 20 15 Q 20 5 15 -3 Z" fill="#8b5cf6" />
+                    </g>
+                  )}
+                </g>
+              ) : (
+                // Riders on the bike, leaning into the ride
+                <g transform="translate(10, 20)">
+                  {/* Rider A (Driver) */}
+                  <g transform="translate(34, 0)">
+                    {/* Helmet */}
+                    <path d="M-6 -10 A 6 6 0 1 1 6 -10 L 6 -6 A 6 6 0 0 1 -6 -6 Z" fill="#e2e8f0" />
+                    <rect x="0" y="-12" width="6" height="5" rx="1" fill="#1e293b" /> {/* Visor */}
+                    {/* Leaning Body */}
+                    <path d="M -2 -5 C 5 -5, 15 -5, 18 -10 L 12 0 C 8 5, -2 10, -5 5 Z" fill="#3b82f6" />
+                    {/* Arm holding handlebars */}
+                    <path d="M 5 -2 L 18 -5" stroke="#2563eb" strokeWidth="3" strokeLinecap="round" />
+                  </g>
+                  
+                  {/* Rider B (Passenger) */}
+                  {riderB && (
+                    <g transform="translate(20, -2)">
+                      {/* Helmet */}
+                      <path d="M-5 -9 A 5 5 0 1 1 5 -9 L 5 -5 A 5 5 0 0 1 -5 -5 Z" fill="#f87171" />
+                      <rect x="1" y="-11" width="4" height="4" rx="1" fill="#1e293b" />
+                      {/* Body leaning into driver */}
+                      <path d="M -1 -4 C 4 -4, 12 0, 10 8 C 5 10, -3 8, -4 2 Z" fill="#8b5cf6" />
+                      {/* Arm holding driver */}
+                      <path d="M 3 -1 L 12 2" stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round" />
+                    </g>
+                  )}
+                </g>
+              )}
+
             </svg>
           </div>
         </div>
       </div>
 
-      <div className="absolute bottom-1.5 right-2 text-[10px] font-medium rounded-full bg-black/35 text-white px-2 py-0.5">
-        {arrived ? "Summit reached" : `Stage ${Math.min(step, TRIP_LEVELS)}/${TRIP_LEVELS}`}
+      {/* Progress Indicator */}
+      <div className="absolute bottom-2 right-3 text-[10px] font-medium rounded-full bg-black/40 text-white px-2.5 py-1 shadow-sm backdrop-blur-sm">
+        {arrived ? "Summit reached 🏔️" : `Stage ${Math.min(step, TRIP_LEVELS)} / ${TRIP_LEVELS}`}
       </div>
-
-      <style>{`
-        @keyframes bike-bob{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-2px) rotate(-1deg)}}
-        @keyframes puff{0%{opacity:.6;transform:translate(0,0) scale(.6)}100%{opacity:0;transform:translate(-10px,-6px) scale(1.4)}}
-      `}</style>
     </div>
   );
 }
