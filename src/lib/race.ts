@@ -1,11 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/clients";
 
 export const RACE_LEVELS = 31;
+export const TRIP_LEVELS = 30;
 
-const LS_KEY = "sprout-race-v1";
+export type RaceMode = "compete" | "collab";
 
-export type RaceIdentity = { code: string; playerKey: string };
+const LS_KEY = "sprout-race-v2";
+const LEGACY_KEY = "sprout-race-v1";
+
+export type Membership = { code: string; playerKey: string };
 
 export type RacePlayer = {
   id: string;
@@ -22,7 +26,16 @@ export type Race = {
   id: string;
   code: string;
   activity: string;
+  mode: RaceMode;
+  team_step: number;
+  team_last_marked: string | null;
   created_at: string;
+};
+
+export type RaceEntry = {
+  race: Race;
+  me: RacePlayer;
+  opponent: RacePlayer | null;
 };
 
 function uuid() {
@@ -40,21 +53,38 @@ export function makeCode() {
   return out;
 }
 
-export function loadIdentity(): RaceIdentity | null {
-  if (typeof window === "undefined") return null;
+export function loadMemberships(): Membership[] {
+  if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(LS_KEY);
-    return raw ? (JSON.parse(raw) as RaceIdentity) : null;
+    if (raw) return JSON.parse(raw) as Membership[];
+    const legacy = window.localStorage.getItem(LEGACY_KEY);
+    if (legacy) {
+      const one = JSON.parse(legacy) as Membership;
+      if (one?.code && one?.playerKey) {
+        window.localStorage.setItem(LS_KEY, JSON.stringify([one]));
+        return [one];
+      }
+    }
+    return [];
   } catch {
-    return null;
+    return [];
   }
 }
 
-export function saveIdentity(id: RaceIdentity | null) {
+function saveMemberships(list: Membership[]) {
   if (typeof window === "undefined") return;
-  if (id) window.localStorage.setItem(LS_KEY, JSON.stringify(id));
-  else window.localStorage.removeItem(LS_KEY);
+  window.localStorage.setItem(LS_KEY, JSON.stringify(list));
   window.dispatchEvent(new Event("sprout-race-identity"));
+}
+
+export function addMembership(m: Membership) {
+  const list = loadMemberships().filter((x) => x.code !== m.code);
+  saveMemberships([...list, m]);
+}
+
+export function leaveRace(code: string) {
+  saveMemberships(loadMemberships().filter((x) => x.code !== code));
 }
 
 export function todayDate() {
@@ -62,11 +92,15 @@ export function todayDate() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export async function createRace(activity: string, name: string) {
+export function levelsFor(mode: RaceMode) {
+  return mode === "collab" ? TRIP_LEVELS : RACE_LEVELS;
+}
+
+export async function createRace(mode: RaceMode, activity: string, name: string) {
   const code = makeCode();
   const { data: race, error } = await supabase
     .from("races")
-    .insert({ code, activity })
+    .insert({ code, activity, mode } as any)
     .select()
     .single();
   if (error) throw error;
@@ -75,33 +109,30 @@ export async function createRace(activity: string, name: string) {
     .from("race_players")
     .insert({ race_id: race.id, player_key: playerKey, name, step: 0 });
   if (pErr) throw pErr;
-  saveIdentity({ code, playerKey });
+  addMembership({ code, playerKey });
   return code;
 }
 
 export async function joinRace(code: string, name: string) {
   const clean = code.trim().toUpperCase();
-  const { data: race, error } = await supabase
-    .from("races")
-    .select()
-    .eq("code", clean)
-    .maybeSingle();
+  const { data: race, error } = await supabase.from("races").select().eq("code", clean).maybeSingle();
   if (error) throw error;
-  if (!race) throw new Error("No race found with that code");
+  if (!race) throw new Error("No game found with that code");
   const { data: players } = await supabase.from("race_players").select().eq("race_id", race.id);
-  if ((players?.length ?? 0) >= 2) throw new Error("This race already has two racers");
+  if ((players?.length ?? 0) >= 2) throw new Error("This game already has two players");
   const playerKey = uuid();
   const { error: pErr } = await supabase
     .from("race_players")
     .insert({ race_id: race.id, player_key: playerKey, name, step: 0 });
   if (pErr) throw pErr;
-  saveIdentity({ code: clean, playerKey });
-  return clean;
+  addMembership({ code: clean, playerKey });
+  return { code: clean, mode: (race as Race).mode ?? "compete" };
 }
 
+/** Compete: move only my own car. */
 export async function advanceMyCar(raceId: string, me: RacePlayer) {
   const today = todayDate();
-  if (me.last_marked === today) return { ok: false, reason: "already" as const };
+  if (me.last_marked === today) return { ok: false as const };
   const step = Math.min(RACE_LEVELS, me.step + 1);
   const { error } = await supabase
     .from("race_players")
@@ -127,84 +158,185 @@ export async function skipToday(raceId: string, me: RacePlayer) {
   if (error) throw error;
 }
 
-export function leaveRace() {
-  saveIdentity(null);
+/** Collaborate: the shared ride moves forward when either rider marks the day. */
+export async function advanceTrip(race: Race, me: RacePlayer) {
+  const today = todayDate();
+  const myFirst = me.last_marked !== today;
+  if (myFirst) {
+    await supabase
+      .from("race_players")
+      .update({ step: Math.min(TRIP_LEVELS, me.step + 1), last_marked: today })
+      .eq("race_id", race.id)
+      .eq("player_key", me.player_key);
+  }
+  if (race.team_last_marked === today) return { ok: myFirst, teamStep: race.team_step };
+  const teamStep = Math.min(TRIP_LEVELS, race.team_step + 1);
+  const { error } = await supabase
+    .from("races")
+    .update({ team_step: teamStep, team_last_marked: today } as any)
+    .eq("id", race.id);
+  if (error) throw error;
+  return { ok: true, teamStep };
 }
 
-export type RaceState = {
+export async function skipTripToday(race: Race, me: RacePlayer) {
+  const today = todayDate();
+  if (me.last_marked === today) return;
+  await supabase
+    .from("race_players")
+    .update({ last_marked: today })
+    .eq("race_id", race.id)
+    .eq("player_key", me.player_key);
+}
+
+/** Days since the shared ride last moved — used for the resting / puncture states. */
+export function idleDays(race: Race) {
+  if (!race.team_last_marked) return 0;
+  const last = new Date(`${race.team_last_marked}T00:00:00`);
+  const now = new Date(`${todayDate()}T00:00:00`);
+  return Math.max(0, Math.round((now.getTime() - last.getTime()) / 86400000));
+}
+
+export type RacesState = {
   loading: boolean;
-  identity: RaceIdentity | null;
-  race: Race | null;
-  me: RacePlayer | null;
-  opponent: RacePlayer | null;
+  entries: RaceEntry[];
   refresh: () => void;
+  /** Optimistic, no-flicker local updates. */
+  patchRace: (raceId: string, patch: Partial<Race>) => void;
+  patchMe: (raceId: string, patch: Partial<RacePlayer>) => void;
 };
 
-export function useRace(): RaceState {
-  const [identity, setIdentity] = useState<RaceIdentity | null>(null);
-  const [race, setRace] = useState<Race | null>(null);
+export function useRaces(): RacesState {
+  const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [races, setRaces] = useState<Race[]>([]);
   const [players, setPlayers] = useState<RacePlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [nonce, setNonce] = useState(0);
+  const loadedOnce = useRef(false);
 
   useEffect(() => {
-    setIdentity(loadIdentity());
-    const onChange = () => setIdentity(loadIdentity());
+    setMemberships(loadMemberships());
+    const onChange = () => setMemberships(loadMemberships());
     window.addEventListener("sprout-race-identity", onChange);
     return () => window.removeEventListener("sprout-race-identity", onChange);
   }, []);
 
   const refresh = useCallback(() => setNonce((n) => n + 1), []);
+  const codes = memberships.map((m) => m.code).join(",");
 
   useEffect(() => {
     let cancelled = false;
-    if (!identity) {
-      setRace(null);
+    const list = codes ? codes.split(",") : [];
+    if (list.length === 0) {
+      setRaces([]);
       setPlayers([]);
       setLoading(false);
       return;
     }
-    // Only show the full-page loading state on the very first fetch for this
-    // identity. Later refreshes (after marking today, or from a realtime
-    // update) happen quietly in the background so the board never unmounts
-    // and flashes back to "Loading your race…".
-    if (!race) setLoading(true);
+    if (!loadedOnce.current) setLoading(true);
     (async () => {
-      const { data: r } = await supabase
-        .from("races")
-        .select()
-        .eq("code", identity.code)
-        .maybeSingle();
+      const { data: rs } = await supabase.from("races").select().in("code", list);
       if (cancelled) return;
-      setRace(r ?? null);
-      if (r) {
-        const { data: ps } = await supabase.from("race_players").select().eq("race_id", r.id);
-        if (!cancelled) setPlayers(ps ?? []);
+      const rows = (rs ?? []) as Race[];
+      setRaces(rows);
+      if (rows.length) {
+        const { data: ps } = await supabase
+          .from("race_players")
+          .select()
+          .in(
+            "race_id",
+            rows.map((r) => r.id),
+          );
+        if (!cancelled) setPlayers((ps ?? []) as RacePlayer[]);
+      } else {
+        setPlayers([]);
       }
-      if (!cancelled) setLoading(false);
+      if (!cancelled) {
+        loadedOnce.current = true;
+        setLoading(false);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [identity, nonce]);
+  }, [codes, nonce]);
 
+  // Live sync — merge rows in place so the scene never remounts.
   useEffect(() => {
-    if (!race) return;
+    if (!races.length) return;
+    const ids = races.map((r) => r.id);
     const channel = supabase
-      .channel(`race-${race.id}`)
+      .channel(`races-${ids.join("-").slice(0, 40)}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "race_players", filter: `race_id=eq.${race.id}` },
-        () => refresh(),
+        { event: "*", schema: "public", table: "race_players" },
+        (payload: { new?: Partial<RacePlayer> | null }) => {
+          const row = payload.new as RacePlayer | null;
+          if (!row?.race_id || !ids.includes(row.race_id)) return;
+          setPlayers((prev) => {
+            const i = prev.findIndex((p) => p.id === row.id);
+            if (i === -1) return [...prev, row as RacePlayer];
+            const next = [...prev];
+            next[i] = { ...next[i], ...row };
+            return next;
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "races" },
+        (payload: { new?: Partial<Race> | null }) => {
+          const row = payload.new as Race | null;
+          if (!row?.id || !ids.includes(row.id)) return;
+          setRaces((prev) => prev.map((r) => (r.id === row.id ? { ...r, ...row } : r)));
+        },
       )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [race, refresh]);
+  }, [races.length, races.map((r) => r.id).join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const me = players.find((p) => p.player_key === identity?.playerKey) ?? null;
-  const opponent = players.find((p) => p.player_key !== identity?.playerKey) ?? null;
+  const patchRace = useCallback((raceId: string, patch: Partial<Race>) => {
+    setRaces((prev) => prev.map((r) => (r.id === raceId ? { ...r, ...patch } : r)));
+  }, []);
 
-  return { loading, identity, race, me, opponent, refresh };
+  const keyByRace = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of races) {
+      const m = memberships.find((x) => x.code === r.code);
+      if (m) map.set(r.id, m.playerKey);
+    }
+    return map;
+  }, [races, memberships]);
+
+  const patchMe = useCallback(
+    (raceId: string, patch: Partial<RacePlayer>) => {
+      const key = keyByRace.get(raceId);
+      if (!key) return;
+      setPlayers((prev) =>
+        prev.map((p) => (p.race_id === raceId && p.player_key === key ? { ...p, ...patch } : p)),
+      );
+    },
+    [keyByRace],
+  );
+
+  const entries: RaceEntry[] = races
+    .map((race) => {
+      const key = keyByRace.get(race.id);
+      const mine = players.filter((p) => p.race_id === race.id);
+      const me = mine.find((p) => p.player_key === key) ?? null;
+      if (!me) return null;
+      return { race, me, opponent: mine.find((p) => p.player_key !== key) ?? null };
+    })
+    .filter(Boolean) as RaceEntry[];
+
+  return { loading, entries, refresh, patchRace, patchMe };
+}
+
+/** Back-compat single-race view (used by the home preview). */
+export function useRace() {
+  const { loading, entries, refresh } = useRaces();
+  const first = entries[0] ?? null;
+  return { loading, race: first?.race ?? null, me: first?.me ?? null, opponent: first?.opponent ?? null, refresh };
 }

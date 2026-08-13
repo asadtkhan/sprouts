@@ -22,9 +22,8 @@ import { SpaceGame } from "@/components/games/SpaceGame";
 import { CatGame } from "@/components/games/CatGame";
 import { TreehouseGame } from "@/components/games/TreehouseGame";
 import { CarRace } from "@/components/games/CarRace";
-import { useRace } from "@/lib/race";
-
-
+import { BikeTrip } from "@/components/games/BikeTrip";
+import { useRaces, idleDays } from "@/lib/race";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -200,25 +199,21 @@ function Hub() {
           )}
         </Link>
 
-        {/* Friend race — multiplayer */}
-        <Link to="/race" data-tour="home-race" className="glass-pop rounded-3xl p-4 block group">
+        {/* Multiplayer */}
+        <Link to="/friends" data-tour="home-friends" className="glass-pop rounded-3xl p-4 block group">
           <div className="flex items-center justify-between mb-3">
             <div>
               <div className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                <Flag className="w-3 h-3" /> Friend race
+                <Flag className="w-3 h-3" /> Multiplayer
               </div>
-              <div className="font-display text-xl">Race a friend</div>
+              <div className="font-display text-xl">Build habits with friends</div>
             </div>
             <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-0.5 transition" />
           </div>
           <RaceThumb />
         </Link>
-
-
       </div>
-
       <AccountDialog open={acctOpen} onOpenChange={setAcctOpen} />
-
     </div>
   );
 }
@@ -238,32 +233,49 @@ function GameThumb() {
 }
 
 function RaceThumb() {
-  const { race, me, opponent } = useRace();
-  if (!race || !me) {
+    const { entries } = useRaces();
+  if (entries.length === 0) {
     return (
       <div>
         <CarRace meName="You" meStep={2} oppName="Friend" oppStep={4} compact />
         <div className="mt-2 text-sm text-muted-foreground">
-          Pick one activity, share a code and race a friend to the finish line.
+          Push each other in a car race, or do it together on a bike ride to the mountains.
         </div>
       </div>
     );
   }
+  const { race, me, opponent } = entries[0];
+  const collab = race.mode === "collab";
   return (
     <div>
-      <CarRace
-        meName={`${me.name} (you)`}
-        meStep={me.step}
-        oppName={opponent?.name ?? null}
-        oppStep={opponent ? opponent.step : null}
-        compact
-      />
+      {collab ? (
+        <BikeTrip
+          step={race.team_step}
+          idle={idleDays(race)}
+          riderA={me.name}
+          riderB={opponent?.name ?? null}
+          compact
+        />
+      ) : (
+        <CarRace
+          meName={`${me.name} (you)`}
+          meStep={me.step}
+          oppName={opponent?.name ?? null}
+          oppStep={opponent ? opponent.step : null}
+          compact
+        />
+      )}
       <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
         <span className="truncate">{race.activity}</span>
         <span>
-          You {me.step} · {opponent ? `${opponent.name} ${opponent.step}` : `Code ${race.code}`}
-        </span>
+          {collab
+            ? `Stage ${race.team_step}`
+            : `You ${me.step} · ${opponent ? `${opponent.name} ${opponent.step}` : `Code ${race.code}`}`}
+          </span>
       </div>
+      {entries.length > 1 && (
+        <div className="mt-1 text-xs text-muted-foreground">+{entries.length - 1} more shared game(s)</div>
+      )}
     </div>
-  );
+  )
 }

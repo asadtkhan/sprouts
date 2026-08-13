@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DailyRouteImport } from './routes/daily'
 import { Route as FocusRouteImport } from './routes/focus'
+import { Route as FriendsRouteImport } from './routes/friends'
 import { Route as JournalRouteImport } from './routes/journal'
 import { Route as PersonalRouteImport } from './routes/personal'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -31,6 +32,11 @@ const DailyRoute = DailyRouteImport.update({
 const FocusRoute = FocusRouteImport.update({
   id: '/focus',
   path: '/focus',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FriendsRoute = FriendsRouteImport.update({
+  id: '/friends',
+  path: '/friends',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JournalRoute = JournalRouteImport.update({
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/daily': typeof DailyRoute
   '/focus': typeof FocusRoute
+  '/friends': typeof FriendsRoute
   '/journal': typeof JournalRoute
   '/personal': typeof PersonalRoute
   '/profile': typeof ProfileRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/daily': typeof DailyRoute
   '/focus': typeof FocusRoute
+  '/friends': typeof FriendsRoute
   '/journal': typeof JournalRoute
   '/personal': typeof PersonalRoute
   '/profile': typeof ProfileRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/daily': typeof DailyRoute
   '/focus': typeof FocusRoute
+  '/friends': typeof FriendsRoute
   '/journal': typeof JournalRoute
   '/personal': typeof PersonalRoute
   '/profile': typeof ProfileRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/daily'
     | '/focus'
+    | '/friends'
     | '/journal'
     | '/personal'
     | '/profile'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/daily'
     | '/focus'
+    | '/friends'
     | '/journal'
     | '/personal'
     | '/profile'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/'
     | '/daily'
     | '/focus'
+    | '/friends'
     | '/journal'
     | '/personal'
     | '/profile'
@@ -127,6 +139,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DailyRoute: typeof DailyRoute
   FocusRoute: typeof FocusRoute
+  FriendsRoute: typeof FriendsRoute
   JournalRoute: typeof JournalRoute
   PersonalRoute: typeof PersonalRoute
   ProfileRoute: typeof ProfileRoute
@@ -155,6 +168,13 @@ declare module '@tanstack/react-router' {
       path: '/focus'
       fullPath: '/focus'
       preLoaderRoute: typeof FocusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/friends': {
+      id: '/friends'
+      path: '/friends'
+      fullPath: '/friends'
+      preLoaderRoute: typeof FriendsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/journal': {
@@ -199,6 +219,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DailyRoute: DailyRoute,
   FocusRoute: FocusRoute,
+  FriendsRoute: FriendsRoute,
   JournalRoute: JournalRoute,
   PersonalRoute: PersonalRoute,
   ProfileRoute: ProfileRoute,
