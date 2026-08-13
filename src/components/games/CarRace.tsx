@@ -18,18 +18,13 @@ export function CarRace({ meName, meStep, oppName, oppStep, compact }: Props) {
   const meX = (meStep + 1) * SEG;
   const oppX = oppStep != null ? (oppStep + 1) * SEG : null;
   const viewW = compact ? 220 : 340;
-  
-  // Keep own car around 38% of the viewport
+  // keep own car around 38% of the viewport
   const camera = Math.max(0, Math.min(trackW - viewW, meX - viewW * 0.38));
-  
-  // Progress (0.0 to 1.0) dictates the time of day and scenery
-  const progress = Math.min(1, meStep / RACE_LEVELS);
-  const isSunset = progress > 0.4;
-  const isNight = progress > 0.75;
 
+  // Detect when your own car actually advances a lap (not on first mount)
+  // so the car can burn some gas and drive there instead of just appearing
   const [boosting, setBoosting] = useState(false);
   const prevStepRef = useRef(meStep);
-  
   useEffect(() => {
     if (meStep > prevStepRef.current) {
       setBoosting(true);
@@ -43,172 +38,128 @@ export function CarRace({ meName, meStep, oppName, oppStep, compact }: Props) {
   return (
     <div className={cn("relative w-full overflow-hidden rounded-2xl", compact ? "h-28" : "h-56")}>
       <style>{`
-        @keyframes wheelSpin { 100%{transform:rotate(360deg)} }
-        @keyframes car-bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-1px)} }
-        @keyframes car-boost { 0%,100%{transform:translateY(0) rotate(0deg)} 20%{transform:translateY(-2px) rotate(-2deg)} }
-        @keyframes exhaust-flame { 0%{transform:scale(0.8); opacity:0.8} 100%{transform:scale(1.5) translate(-10px, 0); opacity:0} }
-        @keyframes dashScroll { 0%{stroke-dashoffset: 24} 100%{stroke-dashoffset: 0} }
-        @keyframes starTwinkle { 0%,100%{opacity:0.2} 50%{opacity:1} }
-        @keyframes lightPulse { 0%,100%{opacity:0.8; filter:brightness(1)} 50%{opacity:1; filter:brightness(1.3)} }
+        @keyframes car-bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-1.5px)} }
+        @keyframes car-boost { 0%,100%{transform:translateY(0) rotate(0deg)} 20%{transform:translateY(-2px) rotate(-2deg)} 80%{transform:translateY(-1px) rotate(1deg)} }
+        @keyframes exhaust-puff { 0%{transform:translate(0,0) scale(0.6);opacity:0.6} 100%{transform:translate(-16px,-9px) scale(1.9);opacity:0} }
+        @keyframes blimpFloat { 0%{transform:translate(0,0)} 100%{transform:translate(15px,-5px)} }
       `}</style>
-
-      {/* Dynamic Sky Background */}
-      <div 
-        className="absolute inset-0 transition-colors duration-1000"
-        style={{
-          background: isNight
-            ? "linear-gradient(180deg, #020617 0%, #0f172a 50%, #1e1b4b 100%)" // Night
-            : isSunset
-            ? "linear-gradient(180deg, #ea580c 0%, #f97316 40%, #fcd34d 100%)" // Sunset
-            : "linear-gradient(180deg, #38bdf8 0%, #7dd3fc 50%, #e0f2fe 100%)" // Day
-        }}
-      />
-
-      {/* Stars (Visible only at night) */}
-      <div className="absolute inset-0" style={{ opacity: isNight ? 1 : 0, transition: "opacity 2s" }}>
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={`star-${i}`}
-            className="absolute rounded-full bg-white"
-            style={{
-              left: `${(i * 37) % 100}%`,
-              top: `${(i * 23) % 40}%`,
-              width: i % 3 === 0 ? 2 : 1,
-              height: i % 3 === 0 ? 2 : 1,
-              animation: `starTwinkle ${2 + (i % 3)}s infinite ${i * 0.5}s`,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Parallax Cityscape (Layer 1 - Slow) */}
-      <div className="absolute inset-0" style={{ transform: `translateX(${-camera * 0.15}px)` }}>
-        <svg width={trackW} height="100%" viewBox={`0 0 ${trackW} 200`} preserveAspectRatio="none">
-          {Array.from({ length: 24 }).map((_, i) => {
-            const bx = i * (trackW / 24);
-            const w = 40 + (i * 17) % 50;
-            const h = 30 + (i * 43) % 80;
-            // Buildings darken as night falls
-            const bColor = isNight ? "#0f172a" : isSunset ? "#9a3412" : "#bae6fd";
-            const wColor = isNight ? "#fef08a" : "transparent"; // Windows turn on at night
-            return (
-              <g key={`city-${i}`}>
-                <rect x={bx} y={115 - h} width={w} height={h} fill={bColor} opacity={isNight ? 0.8 : 0.6} />
-                {/* Glowing Windows */}
-                {isNight && i % 2 === 0 && (
-                  <g fill={wColor} opacity="0.7">
-                    <rect x={bx + 5} y={115 - h + 10} width="4" height="6" />
-                    <rect x={bx + 15} y={115 - h + 10} width="4" height="6" />
-                    <rect x={bx + 15} y={115 - h + 30} width="4" height="6" />
-                    <rect x={bx + 25} y={115 - h + 20} width="4" height="6" />
-                  </g>
-                )}
-              </g>
-            );
-          })}
-        </svg>
-      </div>
-
-      {/* Parallax Mountains/Trees (Layer 2 - Medium) */}
-      <div className="absolute inset-0" style={{ transform: `translateX(${-camera * 0.4}px)` }}>
-        <svg width={trackW} height="100%" viewBox={`0 0 ${trackW} 200`} preserveAspectRatio="none">
-          <path d={`M0 115 Q ${trackW * 0.2} 90 ${trackW * 0.4} 115 T ${trackW * 0.8} 115 T ${trackW} 115 L ${trackW} 200 L 0 200 Z`} fill={isNight ? "#020617" : isSunset ? "#7c2d12" : "#94a3b8"} opacity="0.7" />
-          {/* Silhouetted Trees */}
-          {Array.from({ length: 30 }).map((_, i) => {
-            const tx = i * 60 + (i * 29) % 30;
-            if (tx > trackW) return null;
-            return (
-              <path key={`tree-${i}`} d={`M${tx} 115 L${tx+8} 95 L${tx+16} 115 Z`} fill={isNight ? "#000000" : isSunset ? "#431407" : "#475569"} opacity="0.8" />
-            );
-          })}
-        </svg>
-      </div>
-
-      {/* The Track and Foreground (Layer 3 - Realtime) */}
+      
+      {/* Original Sky */}
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#cfe8ff_0%,#e9f4ff_45%,#dff2e3_46%,#cfead6_100%)]" />
+      
       <div
         className="absolute inset-0"
         style={{ transform: `translateX(${-camera}px)`, width: trackW, transition: "transform 700ms ease-out" }}
       >
         <svg width={trackW} height="100%" viewBox={`0 0 ${trackW} 200`} preserveAspectRatio="none">
-          {/* Track Asphalt */}
-          <rect x="0" y="115" width={trackW} height="85" fill={isNight ? "#1e293b" : "#334155"} />
+          {/* Original Hills */}
+          <path d={`M0 96 Q ${trackW * 0.15} 50 ${trackW * 0.3} 96 T ${trackW * 0.6} 96 T ${trackW} 96 L ${trackW} 200 L 0 200 Z`} fill="#bfe3c6" opacity="0.7" />
           
-          {/* Racing Kerbs (Red & White strips at the top and bottom of the track) */}
-          <line x1="0" y1="117" x2={trackW} y2="117" stroke="#ef4444" strokeWidth="4" strokeDasharray="16 16" />
-          <line x1="16" y1="117" x2={trackW} y2="117" stroke="#ffffff" strokeWidth="4" strokeDasharray="16 16" />
+          {/* --- SCENERY PROPS (Milestones along the track) --- */}
           
-          <line x1="0" y1="198" x2={trackW} y2="198" stroke="#ef4444" strokeWidth="4" strokeDasharray="20 20" />
-          <line x1="20" y1="198" x2={trackW} y2="198" stroke="#ffffff" strokeWidth="4" strokeDasharray="20 20" />
-
-          {/* Lane Divider (Moving Dashes) */}
-          <line 
-            x1="0" y1="157" x2={trackW} y2="157" 
-            stroke="#ffffff" strokeWidth="3" strokeDasharray="24 24" opacity="0.4"
-            style={{ animation: (boosting || oppStep != null) ? "dashScroll 0.4s linear infinite" : "none" }}
-          />
-
-          {/* Starting Gantry */}
-          <g transform={`translate(${SEG - 10}, 60)`}>
-            <rect x="0" y="0" width="10" height="140" fill="#1f2937" />
-            <rect x="-5" y="0" width="30" height="15" fill="#111827" />
-            <circle cx="2" cy="7.5" r="4" fill="#22c55e" style={{ animation: "lightPulse 1s infinite" }} />
-            <circle cx="10" cy="7.5" r="4" fill="#22c55e" style={{ animation: "lightPulse 1s infinite 0.2s" }} />
-            <circle cx="18" cy="7.5" r="4" fill="#22c55e" style={{ animation: "lightPulse 1s infinite 0.4s" }} />
-            {/* Start Line */}
-            <rect x="2" y="55" width="6" height="85" fill="#ffffff" opacity="0.9" />
+          {/* Level 5: Racing Billboard */}
+          <g transform={`translate(${5 * SEG}, 69)`}>
+            <rect x="0" y="0" width="40" height="20" fill="#fca5a5" rx="2" />
+            <rect x="4" y="4" width="32" height="12" fill="#ffffff" opacity="0.6" />
+            <rect x="10" y="20" width="3" height="15" fill="#9ca3af" />
+            <rect x="27" y="20" width="3" height="15" fill="#9ca3af" />
+            <path d="M8 12 L 15 6 L 22 12 Z" fill="#ef4444" opacity="0.8" />
+            <circle cx="28" cy="10" r="4" fill="#3b82f6" opacity="0.8" />
           </g>
 
-          {/* Finish Line Arch */}
-          <g transform={`translate(${(RACE_LEVELS + 1) * SEG}, 40)`}>
-            {/* Pillars */}
-            <rect x="-5" y="0" width="10" height="160" fill="#1f2937" />
-            <rect x="20" y="0" width="10" height="160" fill="#1f2937" />
-            {/* Checkered Banner */}
-            <rect x="-10" y="20" width="45" height="20" fill="#ffffff" />
-            {Array.from({ length: 4 }).map((_, r) =>
-              Array.from({ length: 9 }).map((_, c) => (
-                (r + c) % 2 === 0 && <rect key={`${r}-${c}`} x={-10 + c * 5} y={20 + r * 5} width="5" height="5" fill="#000000" />
-              ))
-            )}
-            <text x="12" y="15" textAnchor="middle" fontSize="10" fill="#ffffff" fontWeight="bold" style={{ animation: "lightPulse 1s infinite" }}>FINISH</text>
-            {/* Finish Line on Track */}
-            {Array.from({ length: 11 }).map((_, r) => (
-              <rect key={`f1${r}`} x="0" y={115 + r * 8} width="12" height="8" fill={r % 2 === 0 ? "#000" : "#fff"} />
-            ))}
-            {Array.from({ length: 11 }).map((_, r) => (
-              <rect key={`f2${r}`} x="12" y={115 + r * 8} width="12" height="8" fill={r % 2 === 0 ? "#fff" : "#000"} />
-            ))}
+          {/* Level 10: Spectator Grandstand */}
+          <g transform={`translate(${10 * SEG}, 74)`}>
+            <path d="M0 30 L10 10 L50 10 L60 30 Z" fill="#9ca3af" />
+            <rect x="10" y="5" width="40" height="5" fill="#ef4444" />
+            <rect x="10" y="10" width="40" height="2" fill="#fca5a5" />
+            {/* Cheering Fans */}
+            <circle cx="15" cy="15" r="2" fill="#3b82f6" />
+            <circle cx="25" cy="18" r="2" fill="#f59e0b" />
+            <circle cx="35" cy="15" r="2" fill="#10b981" />
+            <circle cx="45" cy="18" r="2" fill="#8b5cf6" />
+            <circle cx="20" cy="22" r="2" fill="#ec4899" />
+            <circle cx="30" cy="25" r="2" fill="#06b6d4" />
+            <circle cx="40" cy="22" r="2" fill="#f43f5e" />
           </g>
+
+          {/* Level 20: Tree Cluster */}
+          <g transform={`translate(${20 * SEG}, 59)`}>
+            <rect x="8" y="30" width="4" height="15" fill="#78350f" opacity="0.8" />
+            <circle cx="10" cy="20" r="15" fill="#4ade80" opacity="0.9" />
+            
+            <rect x="27" y="30" width="6" height="15" fill="#78350f" opacity="0.8" />
+            <circle cx="30" cy="15" r="20" fill="#22c55e" opacity="0.9" />
+            
+            <rect x="48" y="35" width="4" height="10" fill="#78350f" opacity="0.8" />
+            <circle cx="50" cy="25" r="12" fill="#16a34a" opacity="0.9" />
+          </g>
+
+          {/* Level 25: Floating Blimp */}
+          <g transform={`translate(${25 * SEG}, 20)`} style={{ animation: "blimpFloat 6s infinite alternate ease-in-out" }}>
+            <ellipse cx="40" cy="20" rx="30" ry="12" fill="#f8fafc" />
+            <path d="M 10 20 L -2 12 L -2 28 Z" fill="#94a3b8" />
+            <rect x="30" y="32" width="20" height="6" rx="2" fill="#cbd5e1" />
+            <text x="40" y="24" fontSize="8" fill="#ef4444" textAnchor="middle" fontWeight="bold">GO!</text>
+          </g>
+
+          {/* Original Road Base */}
+          <rect x="0" y="104" width={trackW} height="72" fill="#4b4f63" />
+          <rect x="0" y="104" width={trackW} height="4" fill="#ffffff" opacity="0.5" />
+          <rect x="0" y="139" width={trackW} height="3" fill="#ffe9a8" opacity="0.85" />
+          
+          {/* Lane dashes */}
+          {Array.from({ length: RACE_LEVELS + 2 }).map((_, i) => (
+            <rect key={`t${i}`} x={i * SEG + 8} y={120} width={20} height="3" fill="#ffffff" opacity="0.45" />
+          ))}
+          {Array.from({ length: RACE_LEVELS + 2 }).map((_, i) => (
+            <rect key={`b${i}`} x={i * SEG + 8} y={158} width={20} height="3" fill="#ffffff" opacity="0.45" />
+          ))}
+          
+          {/* Start Line */}
+          <rect x={SEG - 6} y="104" width="6" height="72" fill="#ffffff" opacity="0.8" />
+          
+          {/* Level 15: Racing Overpass Bridge (Drawn OVER the road) */}
+          <g transform={`translate(${15 * SEG}, 40)`}>
+            {/* Pillars spanning the road */}
+            <rect x="10" y="15" width="8" height="136" fill="#64748b" opacity="0.95" />
+            <rect x="62" y="15" width="8" height="136" fill="#64748b" opacity="0.95" />
+            <rect x="12" y="151" width="4" height="25" fill="#475569" />
+            <rect x="64" y="151" width="4" height="25" fill="#475569" />
+            {/* Banner */}
+            <rect x="0" y="0" width="80" height="20" fill="#3b82f6" rx="2" />
+            <text x="40" y="14" fontSize="10" fill="#ffffff" textAnchor="middle" fontWeight="bold" letterSpacing="1">SPRINT</text>
+          </g>
+
+          {/* Original Finish Line */}
+          {Array.from({ length: 9 }).map((_, r) => (
+            <rect
+              key={`f${r}`}
+              x={(RACE_LEVELS + 1) * SEG}
+              y={104 + r * 8}
+              width="14"
+              height="8"
+              fill={r % 2 === 0 ? "#1f2333" : "#ffffff"}
+            />
+          ))}
         </svg>
 
-        {/* Opponent Car (Far Lane) */}
+        {/* opponent car (far lane) */}
         {oppX != null && (
           <Car
             x={oppX}
-            top="135px"
+            top="46%"
             color="#8b7cf6"
-            label={oppName ?? "Opponent"}
-            scale={0.85}
-            isNight={isNight}
+            label={oppName ?? "Friend"}
+            scale={0.82}
           />
         )}
-        
-        {/* Your Car (Near Lane) */}
-        <Car 
-          x={meX} 
-          top="175px" 
-          color="#f43f5e" 
-          label={meName} 
-          you 
-          scale={1} 
-          boosting={boosting} 
-          isNight={isNight}
-        />
+        {/* your car (near lane) */}
+        <Car x={meX} top="66%" color="#f97362" label={meName} you scale={0.95} boosting={boosting} />
       </div>
 
-      {/* Level Marker */}
-      <div className="absolute bottom-2 right-3 text-[10px] font-medium rounded-full bg-black/50 text-white px-2.5 py-1 shadow-sm backdrop-blur-sm border border-white/10">
-        Lap {Math.min(meStep, RACE_LEVELS)} / {RACE_LEVELS}
+      {/* level marker */}
+      <div className="absolute bottom-1.5 right-2 text-[10px] font-medium rounded-full bg-black/35 text-white px-2 py-0.5">
+        Lap {Math.min(meStep, RACE_LEVELS)}/{RACE_LEVELS}
       </div>
     </div>
   );
@@ -222,7 +173,6 @@ function Car({
   you,
   scale = 1,
   boosting,
-  isNight,
 }: {
   x: number;
   top: string;
@@ -231,7 +181,6 @@ function Car({
   you?: boolean;
   scale?: number;
   boosting?: boolean;
-  isNight?: boolean;
 }) {
   return (
     <div
@@ -240,105 +189,72 @@ function Car({
         left: x,
         top,
         transform: `translate(-50%,-50%) scale(${scale})`,
-        transition: "left 700ms cubic-bezier(0.34, 1.56, 0.64, 1)", // Springy elastic movement
-        zIndex: you ? 20 : 10,
+        transition: "left 700ms ease-out",
       }}
     >
       <div className="flex flex-col items-center gap-0.5">
-        {/* Name Tag */}
         <span
           className={cn(
-            "text-[9px] px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm border",
-            you 
-              ? "bg-white/95 text-foreground font-bold border-slate-200" 
-              : "bg-slate-800/80 text-white font-medium border-slate-700/50",
+            "text-[9px] px-1.5 py-0.5 rounded-full whitespace-nowrap",
+            you ? "bg-white/90 text-foreground font-semibold" : "bg-white/70 text-foreground/80",
           )}
         >
           {label}
         </span>
-        
         <div className="relative mt-1">
-          {/* Boost Flames */}
           {boosting && (
-            <div className="absolute left-[-15px] top-[14px] pointer-events-none z-0">
+            <div className="absolute left-[2px] top-[14px] pointer-events-none">
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="absolute rounded-full"
+                  className="absolute rounded-full bg-slate-400/70"
                   style={{
-                    width: 12,
-                    height: 4,
-                    background: "linear-gradient(90deg, #38bdf8 0%, #0284c7 100%)", // Blue nitrous flame
-                    animation: `exhaust-flame 400ms ease-out ${i * 150}ms infinite alternate`,
-                    filter: "blur(1px)",
+                    width: 5,
+                    height: 5,
+                    animation: `exhaust-puff 650ms ease-out ${i * 110}ms both`,
                   }}
                 />
               ))}
             </div>
           )}
-
-          {/* GT Sports Car SVG */}
+          
+          {/* UPDATED SPORTY CAR SVG */}
           <svg
-            width="64"
-            height="28"
-            viewBox="0 0 64 28"
+            width="58"
+            height="26"
+            viewBox="0 0 58 26"
             style={{
               animation: boosting
                 ? "car-boost 0.6s ease-in-out infinite"
                 : "car-bob 1.6s ease-in-out infinite",
-              filter: isNight ? "drop-shadow(0 10px 8px rgba(0,0,0,0.5))" : "drop-shadow(0 6px 4px rgba(0,0,0,0.3))",
             }}
-            className="relative z-10"
           >
-            {/* Chassis */}
-            <path d="M 6 22 L 8 13 C 10 9, 15 8, 20 8 L 32 6 C 40 4, 48 8, 54 13 C 58 16, 60 18, 60 22 L 6 22 Z" fill={color} />
-            <path d="M 6 22 L 60 22 L 58 25 L 8 25 Z" fill="#1e293b" /> {/* Side skirt */}
+            {/* Shadow */}
+            <ellipse cx="29" cy="24" rx="22" ry="2.5" fill="#000" opacity="0.18" />
             
-            {/* Windows */}
-            <path d="M 22 8 L 31 7 C 36 6, 42 8, 47 12 L 20 12 C 18 10, 20 8, 22 8 Z" fill="#0f172a" opacity="0.85" />
-            <path d="M 33 7 L 35 12" stroke={color} strokeWidth="2" /> {/* Window divider */}
-
-            {/* Rear Spoiler */}
-            <path d="M 4 11 L 10 9 L 14 9" stroke={color} strokeWidth="2.5" fill="none" strokeLinecap="round" />
-            <line x1="6" y1="13" x2="10" y2="10" stroke="#0f172a" strokeWidth="2" />
+            {/* Sporty Body Path */}
+            <path d="M 6 18 L 8 11 C 11 7, 18 6, 25 6 L 35 6 C 44 6, 50 9, 53 13 L 56 18 Z" fill={color} />
             
-            {/* Headlights & Taillights */}
-            <path d="M 54 15 L 59 17 L 59 19 L 55 19 Z" fill={isNight ? "#fef08a" : "#f8fafc"} />
-            <rect x="5" y="14" width="3" height="4" fill={isNight ? "#ef4444" : "#991b1b"} />
+            {/* Lower Trim / Side Skirt */}
+            <path d="M 6 18 L 56 18 L 54 21 L 8 21 Z" fill="#1f2333" opacity="0.4" />
             
-            {/* Glow Effects (Active at Night) */}
-            {isNight && (
-              <g style={{ animation: "lightPulse 1.5s infinite alternate" }}>
-                {/* Headlight Beam */}
-                <path d="M 59 17 L 90 5 L 90 28 L 59 19 Z" fill="url(#headlight-glow)" opacity="0.6" />
-                {/* Taillight Glow */}
-                <circle cx="6" cy="16" r="6" fill="#ef4444" opacity="0.5" filter="blur(2px)" />
-              </g>
-            )}
+            {/* Sporty Rear Spoiler */}
+            <path d="M 4 10 L 10 8 L 13 8" stroke={color} strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <line x1="6" y1="12" x2="9" y2="9" stroke="#1f2333" strokeWidth="1.5" opacity="0.6" />
 
-            {/* Wheels */}
-            <g transform="translate(16, 22)">
-              <circle cx="0" cy="0" r="5.5" fill="#0f172a" />
-              {/* Spinning Alloy */}
-              <g style={{ animation: (boosting || oppStep != null) ? "wheelSpin 0.25s linear infinite" : "none", transformOrigin: "0px 0px" }}>
-                <circle cx="0" cy="0" r="3.5" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="3 2" />
-                <circle cx="0" cy="0" r="1.5" fill="#f8fafc" />
-              </g>
-            </g>
-            <g transform="translate(48, 22)">
-              <circle cx="0" cy="0" r="5.5" fill="#0f172a" />
-              <g style={{ animation: (boosting || oppStep != null) ? "wheelSpin 0.25s linear infinite" : "none", transformOrigin: "0px 0px" }}>
-                <circle cx="0" cy="0" r="3.5" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="3 2" />
-                <circle cx="0" cy="0" r="1.5" fill="#f8fafc" />
-              </g>
-            </g>
+            {/* Tinted Windows */}
+            <path d="M 23 7 L 34 7 C 39 7, 43 9, 46 12 L 20 12 C 18 10, 20 7, 23 7 Z" fill="#ffffff" opacity="0.9" />
+            <line x1="33" y1="7" x2="35" y2="12" stroke={color} strokeWidth="2" /> {/* Pillar */}
+            
+            {/* Details */}
+            <circle cx="54" cy="15" r="2.5" fill="#fef08a" /> {/* Headlight */}
+            <rect x="5" y="14" width="2" height="3" fill="#ef4444" /> {/* Taillight */}
 
-            <defs>
-              <linearGradient id="headlight-glow" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#fef08a" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#fef08a" stopOpacity="0" />
-              </linearGradient>
-            </defs>
+            {/* Sport Wheels */}
+            <circle cx="16" cy="19" r="5" fill="#22232e" />
+            <circle cx="16" cy="19" r="2" fill="#e2e8f0" />
+            <circle cx="42" cy="19" r="5" fill="#22232e" />
+            <circle cx="42" cy="19" r="2" fill="#e2e8f0" />
           </svg>
         </div>
       </div>
