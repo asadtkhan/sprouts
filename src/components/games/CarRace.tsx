@@ -11,6 +11,7 @@ interface Props {
 }
 
 const SEG = 46; // px per level
+const VIEW_H = 200; // native design height, matches the SVG viewBox 1:1
 
 /** Side-on race track. The camera follows the player's own car (their POV). */
 export function CarRace({ meName, meStep, oppName, oppStep, compact }: Props) {
@@ -20,6 +21,8 @@ export function CarRace({ meName, meStep, oppName, oppStep, compact }: Props) {
   const viewW = compact ? 220 : 340;
   // keep own car around 38% of the viewport
   const camera = Math.max(0, Math.min(trackW - viewW, meX - viewW * 0.38));
+  const panelH = compact ? 112 : 224;
+  const scale = panelH / VIEW_H;
 
   // Detect when your own car actually advances a lap (not on first mount)
   // so the car can burn some gas and drive there instead of just appearing
@@ -48,10 +51,10 @@ export function CarRace({ meName, meStep, oppName, oppStep, compact }: Props) {
       <div className="absolute inset-0 bg-[linear-gradient(180deg,#cfe8ff_0%,#e9f4ff_45%,#dff2e3_46%,#cfead6_100%)]" />
       
       <div
-        className="absolute inset-0"
-        style={{ transform: `translateX(${-camera}px)`, width: trackW, transition: "transform 700ms ease-out" }}
+        className="absolute top-0 left-0"
+        style={{ width: trackW, height: VIEW_H, transform: `scale(${scale}) translateX(${-camera}px)`, transformOrigin: "top left", transition: "transform 700ms ease-out" }}
       >
-        <svg width={trackW} height="100%" viewBox={`0 0 ${trackW} 200`} preserveAspectRatio="none">
+        <svg width={trackW} height={VIEW_H} viewBox={`0 0 ${trackW} 200`}>
           {/* Original Hills */}
           <path d={`M0 96 Q ${trackW * 0.15} 50 ${trackW * 0.3} 96 T ${trackW * 0.6} 96 T ${trackW} 96 L ${trackW} 200 L 0 200 Z`} fill="#bfe3c6" opacity="0.7" />
           

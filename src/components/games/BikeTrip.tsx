@@ -37,12 +37,19 @@ export function tripBeat(step: number, idle = 0): TripBeat {
 }
 
 const SEG = 46;
+const VIEW_H = 200; // native design height, matches every layer's SVG viewBox 1:1
 
 export function BikeTrip({ step, idle = 0, riderA, riderB, compact }: Props) {
   const trackW = (TRIP_LEVELS + 2) * SEG;
   const x = (Math.min(step, TRIP_LEVELS) + 1) * SEG;
   const viewW = compact ? 220 : 340;
   const camera = Math.max(0, Math.min(trackW - viewW, x - viewW * 0.42));
+  // Render every parallax layer at native size and scale the whole scene
+  // down uniformly for the compact homepage preview, instead of stretching
+  // each layer's height to fill the panel (which flattened the tea stall
+  // sign, the summit flag and everything else drawn in the scene).
+  const panelH = compact ? 112 : 224;
+  const scale = panelH / VIEW_H;
   
   const resting = idle >= 2;
   const punctured = idle >= 4;
@@ -82,9 +89,15 @@ export function BikeTrip({ step, idle = 0, riderA, riderB, compact }: Props) {
         }} 
       />
 
+      {/* World wrapper: every layer below is laid out at native size, then this
+          single scale keeps them all in proportion at any panel size. */}
+      <div
+        className="absolute top-0 left-0"
+        style={{ width: trackW, height: VIEW_H, transform: `scale(${scale})`, transformOrigin: "top left" }}
+      >
       {/* Layer 1: Far Mountains (Parallax moving slowest) */}
       <div className="absolute inset-0" style={{ transform: `translateX(${-camera * 0.15}px)` }}>
-        <svg width={trackW} height="100%" viewBox={`0 0 ${trackW} 200`} preserveAspectRatio="none">
+        <svg width={trackW} height={VIEW_H} viewBox={`0 0 ${trackW} 200`}>
           {Array.from({ length: 18 }).map((_, i) => {
             const bx = i * (trackW / 18);
             const h = 50 + ((i * 41) % 60);
@@ -103,7 +116,7 @@ export function BikeTrip({ step, idle = 0, riderA, riderB, compact }: Props) {
 
       {/* Layer 2: Midground Hills (Parallax medium) */}
       <div className="absolute inset-0" style={{ transform: `translateX(${-camera * 0.4}px)` }}>
-        <svg width={trackW} height="100%" viewBox={`0 0 ${trackW} 200`} preserveAspectRatio="none">
+        <svg width={trackW} height={VIEW_H} viewBox={`0 0 ${trackW} 200`}>
           <path
             d={`M0 135 Q ${trackW * 0.15} 100 ${trackW * 0.3} 135 T ${trackW * 0.6} 135 T ${trackW * 0.9} 135 T ${trackW} 135 L ${trackW} 200 L 0 200 Z`}
             fill={highAltitude ? "#cadbea" : "#8ab597"}
@@ -125,7 +138,7 @@ export function BikeTrip({ step, idle = 0, riderA, riderB, compact }: Props) {
         className="absolute inset-0"
         style={{ transform: `translateX(${-camera}px)`, width: trackW, transition: "transform 900ms ease-out" }}
       >
-        <svg width={trackW} height="100%" viewBox={`0 0 ${trackW} 200`} preserveAspectRatio="none">
+        <svg width={trackW} height={VIEW_H} viewBox={`0 0 ${trackW} 200`}>
           
           {/* Road Surface */}
           <rect x="0" y="145" width={trackW} height="40" fill={highAltitude ? "#69727d" : "#5a5f74"} />
@@ -334,6 +347,7 @@ export function BikeTrip({ step, idle = 0, riderA, riderB, compact }: Props) {
             </svg>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Progress Indicator */}
