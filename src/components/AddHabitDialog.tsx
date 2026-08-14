@@ -159,10 +159,8 @@ export function AddHabitDialog({ open, onOpenChange, defaultKind = "daily" }: Pr
                     key={p.name}
                     onClick={() => togglePreset(p.name)}
                     className={cn(
-                      "glass-soft rounded-full px-2.5 py-1 text-xs transition hover:scale-105 border-2",
-                      active
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-transparent",
+                      "glass-soft rounded-full px-2.5 py-1 text-xs transition hover:scale-105",
+                      active ? "ring-2 ring-green-500 bg-primary/20" : "",
                     )}
                   >
                     <span className="mr-1">{p.emoji}</span>
