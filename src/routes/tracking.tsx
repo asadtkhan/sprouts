@@ -4,6 +4,8 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -47,94 +49,27 @@ function growthStage(pct: number, due: number): GrowthStage {
   return "bloom";
 }
 
-const STAGE_BG: Record<GrowthStage, string> = {
-  rest: "rgba(255,255,255,0.4)",
-  bare: "rgba(255,214,179,0.35)",
-  sprout: "rgba(255,232,168,0.45)",
-  sapling: "rgba(198,230,169,0.6)",
-  leafy: "rgba(163,214,140,0.78)",
-  bloom: "rgba(110,182,132,0.92)",
+const STAGE_CLASSES: Record<GrowthStage, string> = {
+  rest: "bg-muted/30 border border-dashed border-muted-foreground/30 text-muted-foreground/40",
+  bare: "bg-amber-500/15 text-amber-700/60 dark:text-amber-400/60",
+  sprout: "bg-emerald-500/20 text-emerald-800/70 dark:text-emerald-200/70",
+  sapling: "bg-emerald-500/40 text-emerald-900/80 dark:text-emerald-100/80",
+  leafy: "bg-emerald-500/70 text-emerald-950 dark:text-emerald-50",
+  bloom: "bg-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.3)]",
 };
 
-const STAGE_STEM_TOP: Record<Exclude<GrowthStage, "rest" | "bare">, number> = {
-  sprout: 12.6,
-  sapling: 10.4,
-  leafy: 8.6,
-  bloom: 7,
-};
-
-const STAGE_LEAVES: Record<Exclude<GrowthStage, "rest" | "bare">, { x: number; y: number; rx: number; ry: number; rot: number }[]> = {
-  sprout: [{ x: 11.5, y: 12.9, rx: 1.7, ry: 0.9, rot: -25 }],
-  sapling: [
-    { x: 8.1, y: 12.1, rx: 1.9, ry: 1, rot: 25 },
-    { x: 11.9, y: 11, rx: 1.9, ry: 1, rot: -22 },
-  ],
-  leafy: [
-    { x: 7.7, y: 11.6, rx: 2.1, ry: 1.1, rot: 28 },
-    { x: 12.3, y: 10.5, rx: 2.1, ry: 1.1, rot: -26 },
-    { x: 8.6, y: 9.2, rx: 1.8, ry: 1, rot: 18 },
-  ],
-  bloom: [
-    { x: 7.7, y: 11.6, rx: 2.1, ry: 1.1, rot: 28 },
-    { x: 12.3, y: 10.5, rx: 2.1, ry: 1.1, rot: -26 },
-  ],
-};
-
-/** A single day cell in the ecosystem heatmap: soil, if nothing was due that
- * day, or a little plant that grows fuller the more of the day's rituals
- * got done. Same completion bands the app already uses elsewhere, just
- * drawn as a garden instead of a flat color. */
-function GrowthCell({ pct, due, isToday, title }: { pct: number; due: number; isToday: boolean; title: string }) {
+function GrowthCell({ pct, due, isToday, title, dayNum }: { pct: number; due: number; isToday: boolean; title: string; dayNum?: number }) {
   const stage = growthStage(pct, due);
+  
   return (
     <div
-      className={`aspect-square rounded-lg flex items-center justify-center ${isToday ? "ring-2 ring-primary" : ""}`}
-      style={{ background: STAGE_BG[stage] }}
+      className={`relative aspect-square rounded-xl flex items-center justify-center font-medium text-xs sm:text-sm transition-all ${STAGE_CLASSES[stage]} ${isToday ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}
       title={title}
     >
-      <svg viewBox="0 0 20 20" width="76%" height="76%">
-        {stage === "rest" && (
-          <circle cx="10" cy="10" r="6" fill="none" stroke="#c7c7cf" strokeWidth="1.3" strokeDasharray="2.3 2.1" />
-        )}
-        {stage !== "rest" && (
-          <>
-            <ellipse cx="10" cy="16.3" rx="6.4" ry="1.9" fill="#caa273" opacity={stage === "bare" ? 0.9 : 0.85} />
-            {stage === "bare" && <circle cx="10" cy="14.7" r="0.9" fill="#8a6a3a" opacity="0.7" />}
-            {stage !== "bare" && (
-              <>
-                <line
-                  x1="10"
-                  y1="16"
-                  x2="10"
-                  y2={STAGE_STEM_TOP[stage as Exclude<GrowthStage, "rest" | "bare">]}
-                  stroke="#3f7d4f"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-                {STAGE_LEAVES[stage as Exclude<GrowthStage, "rest" | "bare">].map((leaf, i) => (
-                  <ellipse
-                    key={i}
-                    cx={leaf.x}
-                    cy={leaf.y}
-                    rx={leaf.rx}
-                    ry={leaf.ry}
-                    fill="#4ade80"
-                    transform={`rotate(${leaf.rot} ${leaf.x} ${leaf.y})`}
-                  />
-                ))}
-                {stage === "bloom" && (
-                  <>
-                    {[0, 72, 144, 216, 288].map((deg) => (
-                      <ellipse key={deg} cx="10" cy="6.2" rx="1.6" ry="2.3" fill="#f97362" transform={`rotate(${deg} 10 6.2)`} />
-                    ))}
-                    <circle cx="10" cy="6.2" r="1.1" fill="#ffd76a" />
-                  </>
-                )}
-              </>
-            )}
-          </>
-        )}
-      </svg>
+      {dayNum}
+      {stage === "bloom" && (
+        <Sparkles className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 text-yellow-400 fill-yellow-400 drop-shadow-sm" />
+      )}
     </div>
   );
 }
@@ -163,12 +98,11 @@ function TrackingPage() {
   const monthLabel = today.toLocaleDateString(undefined, { month: "long", year: "numeric" });
   const cap = daysInMonth(today);
 
-  // Calendar: current month, per day daily completion %
   const calendar = useMemo(() => {
     const y = today.getFullYear();
     const m = today.getMonth();
     const first = new Date(y, m, 1);
-    const startPad = first.getDay(); // Sun = 0
+    const startPad = first.getDay(); 
     const cells: { date: string | null; pct: number; due: number; isToday: boolean }[] = [];
     for (let i = 0; i < startPad; i++) cells.push({ date: null, pct: 0, due: 0, isToday: false });
     for (let d = 1; d <= cap; d++) {
@@ -181,7 +115,6 @@ function TrackingPage() {
     return cells;
   }, [s.habits, iso, cap, today]);
 
-  // Weekly individual activities — last 7 days counts per activity
   const individualHabits = s.habits.filter((h) => h.kind === "individual");
   const weeklyIndividual = useMemo(() => {
     const cutoffs: string[] = [];
@@ -191,12 +124,13 @@ function TrackingPage() {
       cutoffs.push(todayISO(d));
     }
     return individualHabits.map((h) => ({
-      name: `${h.emoji} ${h.name.length > 14 ? h.name.slice(0, 12) + "…" : h.name}`,
+      id: h.id,
+      emoji: h.emoji,
+      name: h.name,
       count: h.individualLogs.filter((d) => cutoffs.includes(d)).length,
-    }));
+    })).sort((a, b) => b.count - a.count);
   }, [individualHabits, today]);
 
-  // Top weekday for individual + daily completions combined
   const topWeekday = useMemo(() => {
     const counts = Array(7).fill(0);
     const cutoff = new Date(today);
@@ -213,7 +147,6 @@ function TrackingPage() {
     return { day: WEEKDAYS[counts.indexOf(max)], count: max };
   }, [s.habits, today]);
 
-  // Focus minutes last 15 days
   const focusData = useMemo(() => {
     const map = new Map<string, number>();
     for (let i = 14; i >= 0; i--) {
@@ -236,10 +169,6 @@ function TrackingPage() {
   const streak = overallStreak(s.habits, today);
   const monthWord = today.toLocaleDateString(undefined, { month: "long" });
 
-  // Bounce-Back Rate: count days this month where an off day (rituals were
-  // due, at least one was marked, but the day fell short of 80%) was
-  // immediately followed by a day that hit 80% or more. Celebrates getting
-  // back on track rather than only ever counting a perfect streak.
   const bounceBack = useMemo(() => {
     const daily = s.habits.filter((h) => h.kind === "daily");
     if (daily.length === 0) return { count: 0, hasDaily: false };
@@ -254,10 +183,6 @@ function TrackingPage() {
     return { count, hasDaily: true };
   }, [s.habits, today]);
 
-  // Habit Rhythms: the dominant time of day habits and activities actually
-  // get marked. Only real, going forward — completedTimes/individualLogTimes
-  // start empty for habits created before this shipped, so there's nothing
-  // to fabricate for older data. We wait for a small sample before guessing.
   const rhythm = useMemo(() => {
     const hours: number[] = [];
     for (const h of s.habits) {
@@ -276,9 +201,6 @@ function TrackingPage() {
     return { bucket: top[0], pct: Math.round((top[1] / hours.length) * 100) };
   }, [s.habits]);
 
-  // Narrative Impact Stats: tie real numbers back to the companions and
-  // multiplayer games, grounding the abstract counts in the emotional hook
-  // of the app.
   const gameImpact = useMemo(() => {
     const totals: Record<GameKind, number> = { tree: 0, space: 0, cat: 0, treehouse: 0 };
     for (const h of s.habits) {
@@ -323,20 +245,18 @@ function TrackingPage() {
         <StatCard label="Fruits" value={s.totalFruits} />
       </div>
 
-
       <div data-tour="tracking-calendar" className="glass-pop rounded-3xl p-4 mb-3">
         <div className="flex items-center justify-between mb-3">
           <div className="text-sm font-medium flex items-center gap-1.5">
-            <Leaf className="w-3.5 h-3.5 text-primary" /> Your ecosystem, {monthLabel}
+            <Leaf className="w-4 h-4 text-emerald-500" /> Your ecosystem, {monthLabel}
           </div>
-          <div className="text-[11px] text-muted-foreground">by day of month</div>
         </div>
-        <div className="grid grid-cols-7 gap-1.5 mb-2 text-[10px] text-muted-foreground text-center">
+        <div className="grid grid-cols-7 gap-1.5 mb-2 text-[10px] uppercase font-semibold text-muted-foreground/60 text-center">
           {WEEKDAYS.map((d) => (
             <div key={d}>{d[0]}</div>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-1.5">
+        <div className="grid grid-cols-7 gap-2">
           {calendar.map((c, i) => {
             if (!c.date) return <div key={i} className="aspect-square" />;
             const dayNum = Number(c.date.slice(-2));
@@ -347,40 +267,25 @@ function TrackingPage() {
                 due={c.due}
                 isToday={c.isToday}
                 title={`${dayNum} ${monthLabel} · ${c.due === 0 ? "rest day" : `${c.pct}%`}`}
+                dayNum={dayNum}
               />
             );
           })}
         </div>
-        <div className="mt-3 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <span>Barren</span>
-          {(["bare", "sprout", "sapling", "leafy", "bloom"] as const).map((stage) => (
-            <div key={stage} className="w-5 h-5 rounded" style={{ background: STAGE_BG[stage] }}>
-              <svg viewBox="0 0 20 20" width="100%" height="100%">
-                {stage === "bare" ? (
-                  <>
-                    <ellipse cx="10" cy="16.3" rx="6.4" ry="1.9" fill="#caa273" opacity="0.9" />
-                    <circle cx="10" cy="14.7" r="0.9" fill="#8a6a3a" opacity="0.7" />
-                  </>
-                ) : (
-                  <>
-                    <ellipse cx="10" cy="16.3" rx="6.4" ry="1.9" fill="#caa273" opacity="0.85" />
-                    <line x1="10" y1="16" x2="10" y2={STAGE_STEM_TOP[stage]} stroke="#3f7d4f" strokeWidth="1.5" strokeLinecap="round" />
-                    {STAGE_LEAVES[stage].map((leaf, i) => (
-                      <ellipse key={i} cx={leaf.x} cy={leaf.y} rx={leaf.rx} ry={leaf.ry} fill="#4ade80" transform={`rotate(${leaf.rot} ${leaf.x} ${leaf.y})`} />
-                    ))}
-                    {stage === "bloom" &&
-                      [0, 72, 144, 216, 288].map((deg) => (
-                        <ellipse key={deg} cx="10" cy="6.2" rx="1.6" ry="2.3" fill="#f97362" transform={`rotate(${deg} 10 6.2)`} />
-                      ))}
-                  </>
-                )}
-              </svg>
-            </div>
-          ))}
-          <span>Blooming</span>
-          <div className="ml-auto flex items-center gap-1">
-            <div className="w-3 h-3 rounded bg-white/40 border border-dashed border-muted-foreground" />
-            <span>rest</span>
+        
+        <div className="mt-5 flex items-center justify-between text-[11px] font-medium text-muted-foreground px-1">
+          <div className="flex items-center gap-1.5">
+            <span>Rest</span>
+            <div className={`w-5 h-5 rounded-md ${STAGE_CLASSES.rest}`} />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span>Less</span>
+            {(["bare", "sprout", "sapling", "leafy", "bloom"] as const).map((stage) => (
+              <div key={stage} className={`w-5 h-5 rounded-md flex items-center justify-center ${STAGE_CLASSES[stage]}`}>
+                 {stage === "bloom" && <Sparkles className="w-2.5 h-2.5 text-white fill-white" />}
+              </div>
+            ))}
+            <span>More</span>
           </div>
         </div>
       </div>
@@ -438,7 +343,7 @@ function TrackingPage() {
       </div>
 
       <div className="glass-pop rounded-3xl p-4 mb-4">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-4">
           <div className="text-sm font-medium">Personal activities, last 7 days</div>
           {topWeekday && (
             <div className="text-[11px] text-muted-foreground">
@@ -449,31 +354,55 @@ function TrackingPage() {
         {weeklyIndividual.length === 0 ? (
           <Empty text="Add a personal activity to see your weekly rhythm." />
         ) : (
-          <ResponsiveContainer width="100%" height={Math.max(140, weeklyIndividual.length * 38)}>
-            <BarChart data={weeklyIndividual} layout="vertical" margin={{ left: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-              <XAxis type="number" allowDecimals={false} fontSize={11} />
-              <YAxis type="category" dataKey="name" width={130} fontSize={11} />
-              <Tooltip formatter={(v: number) => `${v} log${v === 1 ? "" : "s"}`} />
-              <Bar dataKey="count" fill="hsl(160 55% 45%)" radius={[0, 6, 6, 0]} />
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={weeklyIndividual} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} vertical={false} />
+              {/* Uses only the emoji for the bottom axis label to keep it ultra-clean */}
+              <XAxis 
+                dataKey="emoji" 
+                fontSize={18} 
+                tickLine={false} 
+                axisLine={false} 
+                dy={8} 
+              />
+              <YAxis 
+                allowDecimals={false} 
+                fontSize={11} 
+                tickLine={false} 
+                axisLine={false} 
+                tick={{ fill: 'currentColor', opacity: 0.8 }} 
+              />
+              <Tooltip 
+                cursor={{ fill: 'rgba(0,0,0,0.05)' }} 
+                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
+                labelFormatter={(label, payload) => payload?.[0]?.payload?.name || label}
+                formatter={(v: number) => [`${v} log${v === 1 ? "" : "s"}`, "Total"]} 
+              />
+              <Bar dataKey="count" fill="hsl(160 55% 45%)" radius={[6, 6, 0, 0]} maxBarSize={40} />
             </BarChart>
           </ResponsiveContainer>
         )}
       </div>
 
       <div className="glass-pop rounded-3xl p-4 mb-4">
-        <div className="text-sm font-medium mb-3">Focus minutes, last 15 days</div>
+        <div className="text-sm font-medium mb-4">Focus minutes, last 15 days</div>
         {s.focusSessions.length === 0 ? (
           <Empty text="Start a focus session to see it here." />
         ) : (
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={focusData}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-              <XAxis dataKey="label" fontSize={11} />
-              <YAxis fontSize={11} />
-              <Tooltip formatter={(v: number) => `${v} min`} />
-              <Bar dataKey="minutes" fill="hsl(20 80% 60%)" radius={[6, 6, 0, 0]} />
-            </BarChart>
+            <AreaChart data={focusData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorFocus" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(20 80% 60%)" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="hsl(20 80% 60%)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} vertical={false} />
+              <XAxis dataKey="label" fontSize={11} tickLine={false} axisLine={false} tick={{ fill: 'currentColor', opacity: 0.8 }} dy={10} minTickGap={20} />
+              <YAxis fontSize={11} tickLine={false} axisLine={false} tick={{ fill: 'currentColor', opacity: 0.8 }} />
+              <Tooltip cursor={{ stroke: 'currentColor', strokeWidth: 1, strokeDasharray: '3 3' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} formatter={(v: number) => `${v} min`} />
+              <Area type="monotone" dataKey="minutes" stroke="hsl(20 80% 60%)" strokeWidth={3} fillOpacity={1} fill="url(#colorFocus)" />
+            </AreaChart>
           </ResponsiveContainer>
         )}
       </div>
