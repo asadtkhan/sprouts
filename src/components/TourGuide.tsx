@@ -9,6 +9,7 @@ import {
   LineChart,
   Sparkles,
   Flag,
+  Trophy,
   ArrowLeft,
   ArrowRight,
   ArrowUp,
@@ -62,11 +63,11 @@ const STEPS: Step[] = [
   },
   {
     route: "/",
-    target: "home-race",
+    target: "home-friends",
     icon: Flag,
-    label: "Race",
-    title: "Race a friend",
-    body: "Pick one activity to share with a friend, then swap race codes. Every day you both keep it, your cars drive a lap closer to the finish line.",
+    label: "Multiplayer",
+    title: "Multiplayer card",
+    body: "Team up with a friend here, racing each other forward or riding together toward the mountains. Tap the card to open the full Multiplayer screen.",
   },
 
   {
@@ -84,6 +85,22 @@ const STEPS: Step[] = [
     label: "Activities",
     title: "Your ongoing activities",
     body: "Each card has its own game and its own history. Tap \"I did it\" to take a step forward. There's no penalty for a slow day.",
+  },
+  {
+    route: "/friends",
+    target: "friends-modes",
+    icon: Flag,
+    label: "Modes",
+    title: "Push each other, or ride together",
+    body: "Push each other is a car race, best for a friendly bit of competition. Do it together is one shared bike ride that moves forward on either of your good days. Add your name, pick a shared activity, then create a code or join a friend's.",
+  },
+  {
+    route: "/friends",
+    target: "friends-games",
+    icon: Trophy,
+    label: "Games",
+    title: "Every shared game lives here",
+    body: "Each race or ride gets its own little scene. Mark it done once a day, and check back tomorrow to see how far you have moved.",
   },
   {
     route: "/focus",
@@ -115,7 +132,7 @@ const STEPS: Step[] = [
     icon: Compass,
     label: "Navigate",
     title: "Move around from here",
-    body: "This bar is always with you: Home, Focus, Journal, Tracking and Profile. Daily rituals, personal activities and the friend race all live on the Home screen. Replay this tour anytime from Profile.",
+    body: "This bar is always with you: Home, Focus, Journal, Tracking and Profile. Daily rituals, personal activities and multiplayer all live on the Home screen. Replay this tour anytime from Profile.",
   },
 
 ];
@@ -238,13 +255,25 @@ export function TourGuide() {
   const bottomLimit = vh - navSpace;
 
   const pad = compact ? 6 : 8;
-  const spot = rect
+  const rawSpot = rect
     ? {
         top: rect.top - pad,
         left: rect.left - pad,
         width: rect.width + pad * 2,
         height: rect.height + pad * 2,
       }
+    : null;
+  // Some targets (a long activity list, a stack of active games) can grow
+  // taller than the screen. Clamp the glow to the viewport so it always
+  // reads as a crisp highlight instead of a ring that runs off the edge.
+  const spot = rawSpot
+    ? (() => {
+        const top = Math.max(edge, rawSpot.top);
+        const left = Math.max(edge, rawSpot.left);
+        const bottom = Math.min(vh - edge, rawSpot.top + rawSpot.height);
+        const right = Math.min(vw - edge, rawSpot.left + rawSpot.width);
+        return { top, left, width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
+      })()
     : null;
 
   // Pick the side with the most usable room, then clamp everything on-screen.

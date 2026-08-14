@@ -47,6 +47,10 @@ function FriendsPage() {
   const [mode, setMode] = useState<RaceMode>("compete");
   const { loading, entries, patchRace, patchMe } = useRaces();
 
+  // Only show games that belong to the tab that's open, so a race never
+  // shows up under Do it together and a ride never shows up under Push each other.
+  const visibleEntries = entries.filter((e) => e.race.mode === mode);
+
   return (
     <div className="min-h-screen px-4 py-6 md:py-10 pb-28 max-w-2xl mx-auto">
       <div className="mb-5 flex items-center gap-3">
@@ -59,34 +63,40 @@ function FriendsPage() {
         </div>
       </div>
 
-      <div className="glass-soft rounded-full p-1 grid grid-cols-2 gap-1 mb-4">
-        <button
-          onClick={() => setMode("compete")}
-          className={`rounded-full py-2 text-sm font-semibold transition ${mode === "compete" ? "glass-pop" : "text-muted-foreground"}`}
-        >
-          <Flag className="w-4 h-4 inline mr-1" /> Push each other
-        </button>
-        <button
-          onClick={() => setMode("collab")}
-          className={`rounded-full py-2 text-sm font-semibold transition ${mode === "collab" ? "glass-pop" : "text-muted-foreground"}`}
-        >
-          <Mountain className="w-4 h-4 inline mr-1" /> Do it together
-        </button>
+      <div data-tour="friends-modes">
+        <div className="glass-soft rounded-full p-1 grid grid-cols-2 gap-1 mb-4">
+          <button
+            onClick={() => setMode("compete")}
+            className={`rounded-full py-2 text-sm font-semibold transition ${mode === "compete" ? "glass-pop" : "text-muted-foreground"}`}
+          >
+            <Flag className="w-4 h-4 inline mr-1" /> Push each other
+          </button>
+          <button
+            onClick={() => setMode("collab")}
+            className={`rounded-full py-2 text-sm font-semibold transition ${mode === "collab" ? "glass-pop" : "text-muted-foreground"}`}
+          >
+            <Mountain className="w-4 h-4 inline mr-1" /> Do it together
+          </button>
+        </div>
+
+        <NewGame mode={mode} />
       </div>
 
-      <NewGame mode={mode} />
-
-      <div className="mt-6">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Active games</div>
+      <div className="mt-6" data-tour="friends-games">
+        <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+          {mode === "compete" ? "Active races" : "Active rides"}
+        </div>
         {loading ? (
           <div className="glass-pop rounded-3xl p-6 text-sm text-muted-foreground">Loading your games…</div>
-        ) : entries.length === 0 ? (
+        ) : visibleEntries.length === 0 ? (
           <div className="glass-pop rounded-3xl p-6 text-sm text-muted-foreground">
-            No shared games yet. Start one above or join with a friend's code.
+            {mode === "compete"
+              ? "No races yet. Start one above or join with a friend's code."
+              : "No rides yet. Start one above or join with a friend's code."}
           </div>
         ) : (
           <div className="space-y-4">
-            {entries.map((e) => (
+            {visibleEntries.map((e) => (
               <GameCard key={e.race.id} entry={e} patchRace={patchRace} patchMe={patchMe} />
             ))}
           </div>
