@@ -4,12 +4,13 @@ import { GAMES } from "@/lib/presets";
 import { setGame, completeOnboarding, useAppState, type GameKind } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
 
 export function Onboarding() {
   const state = useAppState();
   const [step, setStep] = useState<1 | 2 | 3>(state.habits.length === 0 ? 1 : 2);
   const [addOpen, setAddOpen] = useState(false);
-  const [pickedGame, setPickedGame] = useState<GameKind | null>(null);
+  const [pickedGame, setPickedGame] = useState<GameKind | null>(GAMES[0]?.kind ?? null);
 
   // if habits exist and no game yet, jump to game step
   if (state.habits.length > 0 && step === 1) setStep(2);
@@ -63,22 +64,30 @@ export function Onboarding() {
 
         {step === 2 && (
           <div className="space-y-3">
-            {GAMES.map((g) => (
-              <button
-                key={g.kind}
-                onClick={() => setPickedGame(g.kind)}
-                className={cn(
-                  "w-full glass-soft rounded-2xl p-4 text-left flex items-center gap-4 transition hover:scale-[1.01]",
-                  pickedGame === g.kind && "ring-2 ring-primary",
-                )}
-              >
-                <div className="text-3xl">{g.emoji}</div>
-                <div>
-                  <div className="font-medium">{g.title}</div>
-                  <div className="text-xs text-muted-foreground">{g.tagline}</div>
-                </div>
-              </button>
-            ))}
+            {GAMES.map((g) => {
+              const active = pickedGame === g.kind;
+              return (
+                <button
+                  key={g.kind}
+                  onClick={() => setPickedGame(g.kind)}
+                  className={cn(
+                    "w-full glass-pop rounded-2xl p-4 text-left flex items-center gap-4 transition",
+                    active && "ring-2 ring-primary bg-primary/10",
+                  )}
+                >
+                  <div className="text-3xl">{g.emoji}</div>
+                  <div className="flex-1">
+                    <div className="font-medium">{g.title}</div>
+                    <div className="text-xs text-muted-foreground">{g.tagline}</div>
+                  </div>
+                  {active && (
+                    <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                      <Check className="w-3.5 h-3.5" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
             <Button
               onClick={() => {
                 if (pickedGame) {
