@@ -36,6 +36,7 @@ function Section({
 export function AddHabitDialog({ open, onOpenChange, defaultKind = "daily" }: Props) {
   const [name, setName] = useState("");
   const [emoji, setEmoji] = useState("✨");
+  const [selectedPresets, setSelectedPresets] = useState<string[]>([]);
   const [kind, setKind] = useState<HabitKind>(defaultKind);
   const [freqType, setFreqType] = useState<"daily" | "weekly">("daily");
   const [weekdays, setWeekdays] = useState<number[]>([1, 3, 5]);
@@ -50,6 +51,7 @@ export function AddHabitDialog({ open, onOpenChange, defaultKind = "daily" }: Pr
   function reset() {
     setName("");
     setEmoji("✨");
+    setSelectedPresets([]);
     setFreqType("daily");
     setWeekdays([1, 3, 5]);
     setGameKind("tree");
@@ -57,21 +59,37 @@ export function AddHabitDialog({ open, onOpenChange, defaultKind = "daily" }: Pr
     setRemindAt("08:00");
   }
 
+  function togglePreset(presetName: string) {
+    setSelectedPresets((cur) =>
+      cur.includes(presetName) ? cur.filter((n) => n !== presetName) : [...cur, presetName],
+    );
+  }
+
   function submit() {
-    if (!name.trim()) return;
     const frequency: Frequency =
       freqType === "daily" ? { type: "daily" } : { type: "weekly", weekdays };
-    addHabit({
-      name: name.trim(),
-      emoji,
+    const common = {
       kind,
       frequency,
       gameKind: kind === "individual" ? gameKind : undefined,
       reminderTime: kind === "daily" && remindOn ? remindAt : null,
-    });
+    };
+
+    const toAdd: { name: string; emoji: string }[] = HABIT_PRESETS.filter((p) =>
+      selectedPresets.includes(p.name),
+    );
+    if (name.trim()) toAdd.push({ name: name.trim(), emoji });
+    if (toAdd.length === 0) return;
+
+    toAdd.forEach((a) => addHabit({ name: a.name, emoji: a.emoji, ...common }));
     reset();
     onOpenChange(false);
   }
+
+  const totalToAdd = selectedPresets.length + (name.trim() ? 1 : 0);
+  const noun = kind === "daily" ? "ritual" : "activity";
+  const submitLabel =
+    totalToAdd > 1 ? `Add ${totalToAdd} ${kind === "daily" ? "rituals" : "activities"}` : `Add ${noun}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -130,20 +148,28 @@ export function AddHabitDialog({ open, onOpenChange, defaultKind = "daily" }: Pr
                 className="flex-1 h-11 px-3 rounded-2xl bg-white/70 border border-white/60 text-sm placeholder:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
-            <div className="flex flex-wrap gap-1.5 mt-3">
-              {HABIT_PRESETS.map((p) => (
-                <button
-                  key={p.name}
-                  onClick={() => { setName(p.name); setEmoji(p.emoji); }}
-                  className={cn(
-                    "glass-soft rounded-full px-2.5 py-1 text-xs transition hover:scale-105",
-                    name === p.name && "ring-2 ring-primary bg-primary/10",
-                  )}
-                >
-                  <span className="mr-1">{p.emoji}</span>
-                  {p.name}
-                </button>
-              ))}
+            <p className="text-[11px] text-muted-foreground mt-3 mb-1.5">
+              Tap as many as you like, or type your own above
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {HABIT_PRESETS.map((p) => {
+                const active = selectedPresets.includes(p.name);
+                return (
+                  <button
+                    key={p.name}
+                    onClick={() => togglePreset(p.name)}
+                    className={cn(
+                      "glass-soft rounded-full px-2.5 py-1 text-xs transition hover:scale-105 border-2",
+                      active
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-transparent",
+                    )}
+                  >
+                    <span className="mr-1">{p.emoji}</span>
+                    {p.name}
+                  </button>
+                );
+              })}
             </div>
           </Section>
 
@@ -268,10 +294,10 @@ export function AddHabitDialog({ open, onOpenChange, defaultKind = "daily" }: Pr
           </button>
           <button
             onClick={submit}
-            disabled={!name.trim()}
+            disabled={totalToAdd === 0}
             className="flex-1 h-11 rounded-2xl bg-primary text-primary-foreground text-sm font-medium transition hover:opacity-90 disabled:opacity-40"
           >
-            {kind === "daily" ? "Add ritual" : "Add activity"}
+            {submitLabel}
           </button>
         </div>
       </DialogContent>
