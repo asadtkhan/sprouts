@@ -54,23 +54,6 @@ const STEPS: Step[] = [
     body: "Your scheduled habits live here, along with today's progress and a peek at your world. Tap the card to open the full Daily screen.",
   },
   {
-    route: "/",
-    target: "home-personal",
-    icon: Wand2,
-    label: "Personal",
-    title: "Personal activities",
-    body: "Things you do in your own time, not on a schedule. Log one with the plus button, and each activity grows its own little world.",
-  },
-  {
-    route: "/",
-    target: "home-friends",
-    icon: Flag,
-    label: "Multiplayer",
-    title: "Multiplayer card",
-    body: "Team up with a friend here, racing each other forward or riding together toward the mountains. Tap the card to open the full Multiplayer screen.",
-  },
-
-  {
     route: "/daily",
     target: "daily-card",
     icon: ListChecks,
@@ -79,12 +62,28 @@ const STEPS: Step[] = [
     body: "Your world, your streak, today's progress bar, and every ritual for the day, all in one place. Mark each one done or missed, and your world updates at 11 PM.",
   },
   {
+    route: "/",
+    target: "home-personal",
+    icon: Wand2,
+    label: "Personal",
+    title: "Personal activities",
+    body: "Things you do in your own time, not on a schedule. Log one with the plus button, and each activity grows its own little world.",
+  },
+  {
     route: "/personal",
     target: "personal-list",
     icon: Wand2,
     label: "Activities",
     title: "Your ongoing activities",
     body: "Each card has its own game and its own history. Tap \"I did it\" to take a step forward. There's no penalty for a slow day.",
+  },
+  {
+    route: "/",
+    target: "home-friends",
+    icon: Flag,
+    label: "Multiplayer",
+    title: "Multiplayer card",
+    body: "Team up with a friend here, racing each other forward or riding together toward the mountains. Tap the card to open the full Multiplayer screen.",
   },
   {
     route: "/friends",
