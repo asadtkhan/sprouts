@@ -26,13 +26,13 @@ import {
 export const Route = createFileRoute("/friends")({
   head: () => ({
     meta: [
-      { title: "Build habits with friends — Sprout" },
+      { title: "Build habits with friends" },
       {
         name: "description",
         content:
           "Push each other in a car race or do it together on a bike ride to the mountains — shared habits that move a little world every day.",
       },
-      { property: "og:title", content: "Build habits with friends — Sprout" },
+      { property: "og:title", content: "Build habits with friends" },
       {
         property: "og:description",
         content:

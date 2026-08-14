@@ -20,6 +20,11 @@ export interface Habit {
   gameKind?: GameKind; // for personal activities: which game to grow
   reminderTime?: string | null; // "HH:MM" local time reminder for daily habits
   createdAt: number;
+  /** ISO date -> ms timestamp of the moment a daily ritual was marked done.
+   *  Only populated going forward, used to learn the user's natural rhythm. */
+  completedTimes: Record<string, number>;
+  /** Same idea, for personal activity logs. */
+  individualLogTimes: Record<string, number>;
 }
 
 export interface DayLog {
@@ -128,12 +133,14 @@ function load(): AppState {
     if (!raw) return { ...empty, firstOpenedAt: Date.now() };
     const parsed = JSON.parse(raw);
     const habits = (parsed.habits ?? []).map((h: Partial<Habit>) => ({
-      ...h,
-      kind: (h.kind as HabitKind | undefined) ?? "daily",
-      missedDates: h.missedDates ?? [],
-      individualLogs: h.individualLogs ?? [],
-      individualStage: h.individualStage ?? 0,
-    })) as Habit[];
+  ...h,
+  kind: (h.kind as HabitKind | undefined) ?? "daily",
+  missedDates: h.missedDates ?? [],
+  individualLogs: h.individualLogs ?? [],
+  individualStage: h.individualStage ?? 0,
+  completedTimes: h.completedTimes ?? {},
+  individualLogTimes: h.individualLogTimes ?? {},
+})) as Habit[];
     return { ...empty, ...parsed, habits, notif: parsed.notif ?? {} };
   } catch {
     return { ...empty, firstOpenedAt: Date.now() };
@@ -288,7 +295,17 @@ export function shouldPromptSignup(s: AppState, now = Date.now()): boolean {
 // ---------- actions ----------
 
 export function addHabit(
-  input: Omit<Habit, "id" | "completedDates" | "missedDates" | "individualLogs" | "individualStage" | "createdAt">,
+  input: Omit<
+    Habit,
+    | "id"
+    | "completedDates"
+    | "missedDates"
+    | "individualLogs"
+    | "individualStage"
+    | "createdAt"
+    | "completedTimes"
+    | "individualLogTimes"
+  >,
 ) {
   setState((s) => ({
     ...s,
@@ -302,6 +319,8 @@ export function addHabit(
         individualLogs: [],
         individualStage: 0,
         createdAt: Date.now(),
+        completedTimes: {},
+        individualLogTimes: {},
       },
     ],
   }));
@@ -353,6 +372,7 @@ export function markCompleted(id: string) {
             ...h,
             completedDates: already ? h.completedDates : [...h.completedDates, iso],
             missedDates: h.missedDates.filter((d) => d !== iso),
+            completedTimes: already ? h.completedTimes : { ...h.completedTimes, [iso]: Date.now() },
           }
         : h,
     );
@@ -373,6 +393,7 @@ export function markMissed(id: string) {
             ...h,
             missedDates: already ? h.missedDates : [...h.missedDates, iso],
             completedDates: h.completedDates.filter((d) => d !== iso),
+            completedTimes: withoutKey(h.completedTimes, iso),
           }
         : h,
     );
@@ -390,6 +411,7 @@ export function clearToday(id: string) {
             ...h,
             completedDates: h.completedDates.filter((d) => d !== iso),
             missedDates: h.missedDates.filter((d) => d !== iso),
+            completedTimes: withoutKey(h.completedTimes, iso),
           }
         : h,
     ),
@@ -408,7 +430,7 @@ export function logIndividual(id: string) {
     firstActivityAt: s.firstActivityAt ?? Date.now(),
     habits: s.habits.map((h) =>
       h.id === id && !h.individualLogs.includes(iso)
-        ? { ...h, individualLogs: [...h.individualLogs, iso] }
+        ? { ...h, individualLogs: [...h.individualLogs, iso], individualLogTimes: { ...h.individualLogTimes, [iso]: Date.now() } }
         : h,
     ),
   }));
@@ -419,7 +441,9 @@ export function unlogIndividual(id: string) {
   setState((s) => ({
     ...s,
     habits: s.habits.map((h) =>
-      h.id === id ? { ...h, individualLogs: h.individualLogs.filter((d) => d !== iso) } : h,
+      h.id === id
+        ? { ...h, individualLogs: h.individualLogs.filter((d) => d !== iso), individualLogTimes: withoutKey(h.individualLogTimes, iso) }
+        : h,
     ),
   }));
 }
@@ -466,6 +490,8 @@ export function resetProgressKeepRoutines() {
       missedDates: [],
       individualLogs: [],
       individualStage: 0,
+      completedTimes: {},
+      individualLogTimes: {},
     })),
     game: s.game ? { ...s.game, stage: 0, health: 60, lastTickDate: null } : null,
     logs: [],
@@ -648,6 +674,14 @@ function settleIndividualStages(habits: Habit[], throughISO: string): Habit[] {
     const days = new Set(h.individualLogs.filter((d) => d <= throughISO));
     return { ...h, individualStage: Math.min(INDIVIDUAL_MAX_STAGE, days.size) };
   });
+}
+
+/** Immutably drop one key from a timestamp record (e.g. when a day is unmarked). */
+function withoutKey(rec: Record<string, number>, key: string): Record<string, number> {
+  if (!(key in rec)) return rec;
+  const next = { ...rec };
+  delete next[key];
+  return next;
 }
 
 function isoAdd(iso: string, days: number): string {
