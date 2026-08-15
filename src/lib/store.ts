@@ -83,8 +83,6 @@ export interface AppState {
   logs: DayLog[];
   firstOpenedAt: number | null;
   firstActivityAt: number | null;
-  hasAccount: boolean;
-  accountEmail: string | null;
   onboarded: boolean;
   activeFocus: ActiveFocus | null;
   focusSessions: FocusSession[];
@@ -108,8 +106,6 @@ const empty: AppState = {
   logs: [],
   firstOpenedAt: null,
   firstActivityAt: null,
-  hasAccount: false,
-  accountEmail: null,
   onboarded: false,
   activeFocus: null,
   focusSessions: [],
@@ -133,14 +129,14 @@ function load(): AppState {
     if (!raw) return { ...empty, firstOpenedAt: Date.now() };
     const parsed = JSON.parse(raw);
     const habits = (parsed.habits ?? []).map((h: Partial<Habit>) => ({
-  ...h,
-  kind: (h.kind as HabitKind | undefined) ?? "daily",
-  missedDates: h.missedDates ?? [],
-  individualLogs: h.individualLogs ?? [],
-  individualStage: h.individualStage ?? 0,
-  completedTimes: h.completedTimes ?? {},
-  individualLogTimes: h.individualLogTimes ?? {},
-})) as Habit[];
+      ...h,
+      kind: (h.kind as HabitKind | undefined) ?? "daily",
+      missedDates: h.missedDates ?? [],
+      individualLogs: h.individualLogs ?? [],
+      individualStage: h.individualStage ?? 0,
+      completedTimes: h.completedTimes ?? {},
+      individualLogTimes: h.individualLogTimes ?? {},
+    })) as Habit[];
     return { ...empty, ...parsed, habits, notif: parsed.notif ?? {} };
   } catch {
     return { ...empty, firstOpenedAt: Date.now() };
@@ -183,6 +179,26 @@ export function useAppState(): AppState {
     }
   }, []);
   return s;
+}
+
+/** Replace local state wholesale with a restored cloud snapshot. Used only
+ *  by the "restore with a backup code" flow, never on a normal boot —
+ *  local state stays the source of truth for day to day use, the cloud
+ *  copy is a backup target, not something pulled on every load. */
+export function hydrateFromCloud(remote: Partial<AppState>) {
+  const habits = (remote.habits ?? []).map((h) => ({
+    ...h,
+    kind: h.kind ?? "daily",
+    missedDates: h.missedDates ?? [],
+    individualLogs: h.individualLogs ?? [],
+    individualStage: h.individualStage ?? 0,
+    completedTimes: h.completedTimes ?? {},
+    individualLogTimes: h.individualLogTimes ?? {},
+  })) as Habit[];
+  hydrated = true;
+  state = { ...empty, ...remote, habits, notif: remote.notif ?? {} };
+  persist();
+  emit();
 }
 
 // ---------- helpers ----------
@@ -285,10 +301,10 @@ export function canAddPersonal(_s: AppState): boolean {
   return true;
 }
 
-/** Ask for an account only 10 days after the very first activity was marked. */
+/** Ask to save a backup only 10 days after the very first activity was marked. */
 export const SIGNUP_PROMPT_DAYS = 10;
-export function shouldPromptSignup(s: AppState, now = Date.now()): boolean {
-  if (s.hasAccount || !s.firstActivityAt) return false;
+export function shouldPromptSignup(s: AppState, hasBackup: boolean, now = Date.now()): boolean {
+  if (hasBackup || !s.firstActivityAt) return false;
   return Math.floor((now - s.firstActivityAt) / 86400000) >= SIGNUP_PROMPT_DAYS;
 }
 
@@ -464,14 +480,6 @@ export function resetGame(kind: GameKind) {
 
 export function completeOnboarding() {
   setState((s) => ({ ...s, onboarded: true }));
-}
-
-export function createAccount(email: string) {
-  setState((s) => ({ ...s, hasAccount: true, accountEmail: email }));
-}
-
-export function signOut() {
-  setState((s) => ({ ...s, hasAccount: false, accountEmail: null }));
 }
 
 export function resetAll() {
@@ -676,18 +684,18 @@ function settleIndividualStages(habits: Habit[], throughISO: string): Habit[] {
   });
 }
 
+function isoAdd(iso: string, days: number): string {
+  const d = new Date(iso + "T12:00:00");
+  d.setDate(d.getDate() + days);
+  return todayISO(d);
+}
+
 /** Immutably drop one key from a timestamp record (e.g. when a day is unmarked). */
 function withoutKey(rec: Record<string, number>, key: string): Record<string, number> {
   if (!(key in rec)) return rec;
   const next = { ...rec };
   delete next[key];
   return next;
-}
-
-function isoAdd(iso: string, days: number): string {
-  const d = new Date(iso + "T12:00:00");
-  d.setDate(d.getDate() + days);
-  return todayISO(d);
 }
 
 export function forceEndDay() {

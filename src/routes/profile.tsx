@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { LogOut, Bell, RotateCcw, Sparkles, Compass } from "lucide-react";
+import { Bell, RotateCcw, Sparkles, Compass, ShieldCheck } from "lucide-react";
 import {
   useAppState,
   useDaysSinceFirstOpen,
-  signOut,
   resetAll,
   requestNotifPermission,
   daysInMonth,
 } from "@/lib/store";
-import { AccountDialog } from "@/components/AccountDialog";
+import { useCloudBackup } from "@/lib/cloud";
+import { BackupDialog } from "@/components/BackupDialog";
 import { startTour } from "@/components/TourGuide";
 import { toast } from "sonner";
 
@@ -30,6 +30,7 @@ export const Route = createFileRoute("/profile")({
 function ProfilePage() {
   const s = useAppState();
   const days = useDaysSinceFirstOpen();
+  const { hasBackup } = useCloudBackup();
   const [acctOpen, setAcctOpen] = useState(false);
   const cap = daysInMonth();
 
@@ -40,9 +41,6 @@ function ProfilePage() {
   const totalSessions = s.focusSessions.length;
   const focusMinutes = s.focusSessions.reduce((a, f) => a + f.minutes, 0);
 
-  const initials = (s.accountEmail?.[0] ?? "S").toUpperCase();
-  const displayName = s.accountEmail ?? "Guest gardener";
-
   return (
     <div className="min-h-screen px-4 py-6 md:py-10 max-w-2xl mx-auto">
       <div className="mb-6">
@@ -52,17 +50,17 @@ function ProfilePage() {
 
       <div className="glass-strong rounded-3xl p-6 flex items-center gap-4 mb-4">
         <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-display">
-          {initials}
+          S
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-medium truncate">{displayName}</div>
+          <div className="font-medium truncate">Guest gardener</div>
           <div className="text-xs text-muted-foreground">
-            {s.hasAccount ? "Progress saved to account" : "Local only. Create an account to sync"}
+            {hasBackup ? "Backed up. Restore anytime with your recovery code." : "Local only. Back it up so you don't lose it."}
           </div>
         </div>
-        {!s.hasAccount && (
+        {!hasBackup && (
           <Button size="sm" onClick={() => setAcctOpen(true)} className="rounded-full">
-            Sign up
+            Back up
           </Button>
         )}
       </div>
@@ -106,17 +104,11 @@ function ProfilePage() {
             toast(p === "granted" ? "Notifications on 🔔" : "Notifications off");
           }}
         />
-
-        {s.hasAccount && (
-          <Row
-            icon={<LogOut className="w-4 h-4" />}
-            label="Sign out"
-            onClick={() => {
-              signOut();
-              toast("Signed out");
-            }}
-          />
-        )}
+        <Row
+          icon={<ShieldCheck className="w-4 h-4 text-primary" />}
+          label={hasBackup ? "Get a new recovery code" : "Back up your progress"}
+          onClick={() => setAcctOpen(true)}
+        />
         <Row
           icon={<RotateCcw className="w-4 h-4 text-destructive" />}
           label="Reset everything"
@@ -130,7 +122,7 @@ function ProfilePage() {
         />
       </div>
 
-      <AccountDialog open={acctOpen} onOpenChange={setAcctOpen} />
+      <BackupDialog open={acctOpen} onOpenChange={setAcctOpen} />
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { BottomNav } from "@/components/BottomNav";
 import { TourGuide } from "@/components/TourGuide";
 import { SplashScreen } from "@/components/SplashScreen";
+import { CloudSync } from "@/lib/cloud";
 
 function NotFoundComponent() {
   return (
@@ -64,12 +65,12 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           >
             Try again
           </button>
-          <a
-            href="/"
+          <Link
+            to="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
             Go home
-          </a>
+          </Link>
         </div>
       </div>
     </div>
@@ -104,9 +105,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       
       // The updated browser tab favicon
-      { rel: "icon", href: "/icon-192-v3.png", type: "image/png" },
+      { rel: "icon", href: "/icon-192x192.png", type: "image/png" },
       // The new iOS bookmark icon
-      { rel: "apple-touch-icon", href: "/icon-192-v3.png" },
+      { rel: "apple-touch-icon", href: "/icon-192x192.png" },
       
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
@@ -158,6 +159,7 @@ function RootComponent() {
         <Outlet />
         <BottomNav />
         <TourGuide />
+        <CloudSync />
         <Toaster position="top-center" />
       </SplashScreen>
     </QueryClientProvider>

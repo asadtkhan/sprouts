@@ -15,7 +15,8 @@ import {
   isDueOn,
   MAX_STAGE,
 } from "@/lib/store";
-import { AccountDialog } from "@/components/AccountDialog";
+import { BackupDialog } from "@/components/BackupDialog";
+import { useCloudBackup } from "@/lib/cloud";
 import { Onboarding } from "@/components/Onboarding";
 import { TreeGame } from "@/components/games/TreeGame";
 import { SpaceGame } from "@/components/games/SpaceGame";
@@ -45,11 +46,12 @@ function Index() {
 
 function Hub() {
   const s = useAppState();
+  const { hasBackup } = useCloudBackup();
   const [acctOpen, setAcctOpen] = useState(false);
 
   useEffect(() => {
-    if (shouldPromptSignup(s)) setAcctOpen(true);
-  }, [s]);
+    if (shouldPromptSignup(s, hasBackup)) setAcctOpen(true);
+  }, [s, hasBackup]);
 
   const today = new Date();
   const { pct, done, due } = dayProgress(s.habits, today);
@@ -213,7 +215,7 @@ function Hub() {
           <RaceThumb />
         </Link>
       </div>
-      <AccountDialog open={acctOpen} onOpenChange={setAcctOpen} />
+      <BackupDialog open={acctOpen} onOpenChange={setAcctOpen} />
     </div>
   );
 }
