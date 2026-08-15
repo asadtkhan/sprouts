@@ -104,9 +104,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       
       // The updated browser tab favicon
-      { rel: "icon", href: "/icon-192x192.png", type: "image/png" },
+      { rel: "icon", href: "/icon-192-v2.jpg", type: "image/jpg" },
       // The new iOS bookmark icon
-      { rel: "apple-touch-icon", href: "/icon-192x192.png" },
+      { rel: "apple-touch-icon", href: "/icon-192-v2.jpg" },
       
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
