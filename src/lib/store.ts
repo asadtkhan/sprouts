@@ -1,4 +1,5 @@
 import { useEffect, useSyncExternalStore } from "react";
+import { supabase } from "@/integrations/supabase/clients";
 
 export type GameKind = "tree" | "space" | "cat" | "treehouse";
 export type HabitKind = "daily" | "individual";
@@ -85,6 +86,7 @@ export interface AppState {
   firstActivityAt: number | null;
   hasAccount: boolean;
   accountEmail: string | null;
+  accountProvider: "email" | "phone" | "google" | "apple" | null;
   onboarded: boolean;
   activeFocus: ActiveFocus | null;
   focusSessions: FocusSession[];
@@ -110,6 +112,7 @@ const empty: AppState = {
   firstActivityAt: null,
   hasAccount: false,
   accountEmail: null,
+  accountProvider: null,
   onboarded: false,
   activeFocus: null,
   focusSessions: [],
@@ -286,10 +289,14 @@ export function canAddPersonal(_s: AppState): boolean {
 }
 
 /** Ask for an account only 10 days after the very first activity was marked. */
-export const SIGNUP_PROMPT_DAYS = 10;
-export function shouldPromptSignup(s: AppState, now = Date.now()): boolean {
-  if (s.hasAccount || !s.firstActivityAt) return false;
-  return Math.floor((now - s.firstActivityAt) / 86400000) >= SIGNUP_PROMPT_DAYS;
+/** True once any habit has at least one completed date or logged activity. */
+export function hasCompletedActivity(s: AppState): boolean {
+  return s.habits.some((h) => h.completedDates.length > 0 || h.individualLogs.length > 0);
+}
+
+/** The account option becomes available on the profile screen after one completed activity. */
+export function canPromptSignup(s: AppState): boolean {
+  return !s.hasAccount && hasCompletedActivity(s);
 }
 
 // ---------- actions ----------
@@ -466,15 +473,68 @@ export function completeOnboarding() {
   setState((s) => ({ ...s, onboarded: true }));
 }
 
-export function createAccount(email: string) {
-  setState((s) => ({ ...s, hasAccount: true, accountEmail: email }));
+export async function createAccount(email: string, password: string) {
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) throw error;
+  setState((s) => ({
+    ...s,
+    hasAccount: true,
+    accountEmail: data.user?.email ?? email,
+    accountProvider: "email",
+  }));
+}
+
+export async function signUpWithPhone(phone: string, password: string) {
+  const { data, error } = await supabase.auth.signUp({ phone, password });
+  if (error) throw error;
+  setState((s) => ({
+    ...s,
+    hasAccount: true,
+    accountEmail: data.user?.phone ?? phone,
+    accountProvider: "phone",
+  }));
+}
+
+export async function signInWithGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: `${window.location.origin}/profile` },
+  });
+  if (error) throw error;
+  // Browser navigates away here. The auth listener below picks up the
+  // session and updates local state once Supabase redirects back.
+}
+
+export async function signInWithApple() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "apple",
+    options: { redirectTo: `${window.location.origin}/profile` },
+  });
+  if (error) throw error;
 }
 
 export function signOut() {
-  setState((s) => ({ ...s, hasAccount: false, accountEmail: null }));
+  supabase.auth.signOut();
+  setState((s) => ({ ...s, hasAccount: false, accountEmail: null, accountProvider: null }));
+}
+
+// Keeps local state in sync with the real Supabase session: covers the
+// Google/Apple redirect coming back, and restores login state on refresh.
+if (typeof window !== "undefined") {
+  supabase.auth.onAuthStateChange((_event, session) => {
+    if (!session?.user) return;
+    const provider = (session.user.app_metadata?.provider as AppState["accountProvider"]) ?? "email";
+    setState((s) => ({
+      ...s,
+      hasAccount: true,
+      accountEmail: session.user.email ?? session.user.phone ?? s.accountEmail,
+      accountProvider: provider,
+    }));
+  });
 }
 
 export function resetAll() {
+  supabase.auth.signOut();
   state = { ...empty, firstOpenedAt: Date.now() };
   persist();
   emit();

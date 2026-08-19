@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Bell, ListChecks, Wand2, ChevronRight, Flag } from "lucide-react";
 
@@ -6,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   useAppState,
-  shouldPromptSignup,
   requestNotifPermission,
   forceEndDay,
   logIndividual,
@@ -15,7 +13,6 @@ import {
   isDueOn,
   MAX_STAGE,
 } from "@/lib/store";
-import { AccountDialog } from "@/components/AccountDialog";
 import { Onboarding } from "@/components/Onboarding";
 import { TreeGame } from "@/components/games/TreeGame";
 import { SpaceGame } from "@/components/games/SpaceGame";
@@ -45,11 +42,6 @@ function Index() {
 
 function Hub() {
   const s = useAppState();
-  const [acctOpen, setAcctOpen] = useState(false);
-
-  useEffect(() => {
-    if (shouldPromptSignup(s)) setAcctOpen(true);
-  }, [s]);
 
   const today = new Date();
   const { pct, done, due } = dayProgress(s.habits, today);
@@ -213,7 +205,6 @@ function Hub() {
           <RaceThumb />
         </Link>
       </div>
-      <AccountDialog open={acctOpen} onOpenChange={setAcctOpen} />
     </div>
   );
 }
