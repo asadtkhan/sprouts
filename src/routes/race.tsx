@@ -64,7 +64,7 @@ function RaceSetup({ onDone }: { onDone: () => void }) {
     if (!name.trim() || !activity.trim()) return toast.error("Add your name and the activity");
     setBusy(true);
     try {
-      const c = await createRace(activity.trim(), name.trim());
+      const c = await createRace("compete", activity.trim(), name.trim());
       toast.success(`Race created. Share code ${c}`);
       onDone();
     } catch (e) {
@@ -229,7 +229,7 @@ function RaceBoard({
 
       <button
         onClick={() => {
-          leaveRace();
+          leaveRace(race.code);
           refresh();
         }}
         className="text-xs text-muted-foreground underline mx-auto block"

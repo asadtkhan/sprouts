@@ -1,4 +1,5 @@
 import { useEffect, useSyncExternalStore } from "react";
+import type { User } from "@supabase/supabase-js";
 
 export type GameKind = "tree" | "space" | "cat" | "treehouse";
 export type HabitKind = "daily" | "individual";
@@ -92,6 +93,9 @@ export interface AppState {
   journalEntries: JournalEntry[];
   progressResetAt: number | null;
   notif: NotifState;
+  user: User | null; // Added Supabase User
+  setUser: (user: User | null) => void;
+  setCloudState: (cloudData: Partial<AppState>) => void;
 }
 
 export const MAX_STAGE_CAP = 31;
@@ -117,11 +121,14 @@ const empty: AppState = {
   journalEntries: [],
   progressResetAt: null,
   notif: {},
+  user: null, // Initialized Supabase User state
+  setUser: (user) => setState((s) => ({ ...s, user })),
+  setCloudState: (cloudData) => setState((s) => ({ ...s, ...cloudData })),
 };
 
 let state: AppState = empty;
 let hydrated = false;
-const listeners = new Set<() => void>();
+const listeners = new Set<(nextState: AppState) => void>();
 
 function load(): AppState {
   if (typeof window === "undefined") return empty;
@@ -153,7 +160,7 @@ function persist() {
 }
 
 function emit() {
-  listeners.forEach((l) => l());
+  listeners.forEach((l) => l(state));
 }
 
 export function setState(updater: (s: AppState) => AppState) {
@@ -162,14 +169,24 @@ export function setState(updater: (s: AppState) => AppState) {
   emit();
 }
 
-function subscribe(cb: () => void) {
+function subscribe(cb: (nextState: AppState) => void) {
   listeners.add(cb);
-  return () => listeners.delete(cb);
+  return () => {
+    listeners.delete(cb);
+  };
 }
 function getSnapshot() { return state; }
 function getServerSnapshot() { return empty; }
 
-export function useAppState(): AppState {
+type AppStateSelector<T> = (state: AppState) => T;
+
+interface AppStateHook {
+  (): AppState;
+  <T>(selector: AppStateSelector<T>): T;
+  subscribe: typeof subscribe;
+}
+
+const appStateHook = <T = AppState>(selector?: AppStateSelector<T>): T | AppState => {
   const s = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   useEffect(() => {
     if (!hydrated) {
@@ -182,8 +199,10 @@ export function useAppState(): AppState {
       runPendingTicks();
     }
   }, []);
-  return s;
-}
+  return selector ? selector(s) : s;
+};
+
+export const useAppState = Object.assign(appStateHook, { subscribe }) as AppStateHook;
 
 // ---------- helpers ----------
 
@@ -501,6 +520,18 @@ export function resetProgressKeepRoutines() {
 
 /** Kept as a no-op: progress is never wiped in the released app. */
 export function maybeResetForFreeTrial() {}
+
+// ---------- Sync Actions ----------
+
+// Updates the global user object
+export function setUser(user: User | null) {
+  setState((s) => ({ ...s, user }));
+}
+
+// Merges data retrieved from Supabase into the local store
+export function setCloudState(cloudData: Partial<AppState>) {
+  setState((s) => ({ ...s, ...cloudData }));
+}
 
 // ---------- Journal ----------
 
