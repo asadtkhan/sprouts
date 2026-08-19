@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      user_ecosystems: {
+        Row: {
+          user_id: string
+          state_blob: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          state_blob?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          state_blob?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       race_players: {
         Row: {
           created_at: string
